@@ -1,0 +1,114 @@
+{
+  "_help": "Fictional Orbital Dispatch space industry pack. See README.md for every supported key. Copy this file and domains/ together into a pack directory.",
+  "enabled": true,
+  "title": "Orbital Dispatch",
+  "labels": {
+    "example-launches": "Space launches"
+  },
+  "domains": [
+    "example-launches"
+  ],
+  "defer_to": [],
+  "finance_first_terms": [],
+  "finance_domain_terms": [],
+  "weights": {
+    "velocity": 0.3,
+    "relevance": 0.25,
+    "source_quality": 0.2,
+    "novelty": 0.15,
+    "persona_fit": 0.1
+  },
+  "alert": {
+    "threshold": 0.75,
+    "max_story_age_h": 3.0,
+    "min_outlets": 3,
+    "min_tier1_outlets": 1,
+    "max_nudges_per_24h": 4,
+    "max_nudges_per_run": 1,
+    "dedup_h": 24,
+    "market_move": {
+      "pct_1h": 3.0,
+      "pct_24h": 8.0,
+      "min_outlets": 2
+    }
+  },
+  "window": {
+    "lookback_h": 24,
+    "fresh_h": 3,
+    "burst_h": 1
+  },
+  "cluster": {
+    "min_shared": 3,
+    "min_overlap": 0.5
+  },
+  "news_platforms": [
+    "google_news",
+    "reddit",
+    "hackernews"
+  ],
+  "relevance": {
+    "example-launches": [
+      [
+        "rocket",
+        "satellite",
+        "orbital"
+      ],
+      [
+        "launch",
+        "launches",
+        "mission"
+      ]
+    ]
+  },
+  "strong_terms": [
+    "rocket",
+    "satellite",
+    "launch",
+    "mission",
+    "record"
+  ],
+  "persona_markers": [
+    "launch",
+    "record",
+    "reusable",
+    "orbital",
+    "mission"
+  ],
+  "stale_patterns": [
+    "weekly",
+    "opinion",
+    "podcast",
+    "daily recap"
+  ],
+  "outlets": {
+    "tier1": [
+      "orbital wire",
+      "launch ledger"
+    ],
+    "tier2": [
+      "satellite gazette",
+      "space bulletin"
+    ]
+  },
+  "nudge": {
+    "_help": "command is an argv list; {marker}, {action}, {file} are substituted. [] writes to the outbox only.",
+    "command": [],
+    "action": "example-trend-alert",
+    "marker": "ASK",
+    "report_action": "example-trend-report",
+    "report_marker": "STATUS",
+    "first_report_after_h": 24,
+    "timeout_s": 180,
+    "max_sources": 4
+  },
+  "tuning": {
+    "enabled": false,
+    "window": 10,
+    "step_up": 0.02,
+    "step_down": 0.01,
+    "max_up": 0.1,
+    "max_down": 0.05,
+    "link_state": "",
+    "peer": ""
+  }
+}

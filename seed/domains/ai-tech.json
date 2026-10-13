@@ -1,0 +1,7 @@
+{
+  "name": "ai-tech",
+  "keywords": ["openai", "llm", "gpt", "anthropic", "nvidia", "AI"],
+  "exclude": ["hiring", "who is hiring"],
+  "sources": {"hackernews": {}, "reddit": {"subreddits": ["MachineLearning", "LocalLLaMA", "singularity"]}, "google_news": {"queries": ["AI model launch"]}, "github_trending": {"topics": ["llm", "ai-agents"]}, "arxiv": {"categories": ["cs.AI", "cs.CL"]}},
+  "lanes": ["content"], "tickers": ["NVDA", "MSFT"]
+}

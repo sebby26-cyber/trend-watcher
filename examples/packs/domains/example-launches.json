@@ -1,0 +1,24 @@
+{
+  "_help": "Fictional source search; all omitted domain settings inherit config.json.",
+  "name": "example-launches",
+  "enabled": true,
+  "keywords": [
+    "rocket",
+    "satellite",
+    "orbital"
+  ],
+  "exclude": [
+    "horoscope"
+  ],
+  "sources": {
+    "google_news": {
+      "queries": [
+        "Aster Harbor reusable rocket launch"
+      ]
+    }
+  },
+  "lanes": [
+    "content"
+  ],
+  "tickers": []
+}

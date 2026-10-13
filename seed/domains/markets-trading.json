@@ -1,0 +1,7 @@
+{
+  "_help": "Research feed for downstream research review; never wired to execution.",
+  "name": "markets-trading", "lanes": ["trading", "content"],
+  "keywords": ["stock", "market", "Fed", "earnings", "SPY", "QQQ", "NVDA", "TSLA", "AAPL"],
+  "tickers": ["SPY", "QQQ", "NVDA", "TSLA", "AAPL"],
+  "sources": {"reddit": {"subreddits": ["wallstreetbets", "stocks", "investing"]}, "google_news": {"queries": ["stock market today", "Fed rate"]}, "polymarket": {}, "kalshi": {}}
+}

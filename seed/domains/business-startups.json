@@ -1,0 +1,5 @@
+{
+  "name": "business-startups", "keywords": ["startup", "funding", "founder", "launch", "business"],
+  "sources": {"producthunt": {}, "hackernews": {}, "reddit": {"subreddits": ["startups", "Entrepreneur"]}, "google_news": {"queries": ["startup funding"]}},
+  "lanes": ["content"]
+}
