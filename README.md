@@ -165,6 +165,7 @@ trend-watch status
 | `trend-watch disable` / `enable` | Stops or restarts the scheduled job |
 | `trend-watch budget` | Shows today's Jev calls and tokens against the limits |
 | `trend-watch flush` | Moves outputs that were queued in the outbox into the outputs folder |
+| `trend-watch decay` | Previews eligible state files; add `--apply` to remove them |
 | `trend-watch init` | Creates any missing config from the seeds; it never overwrites your edits |
 | `trend-watch pack list` | Lists the alert packs found on the pack search path |
 
@@ -408,7 +409,21 @@ REPLAY PASSED
 trend-watch migrate              # apply pending forward-only state.db migrations (backs up first)
 trend-watch backup [--dest DIR]  # online backup of state.db (default <state>/backups)
 trend-watch restore <file>       # archive the current state.db, then restore a backup
+trend-watch decay                # preview eligible files and the space they would free
+trend-watch decay --apply        # remove eligible entries and log the results
 ```
+
+File retention defaults to [`seed/decay.json`](seed/decay.json): old run logs,
+copies of outputs already delivered by `flush`, and database backups. Rules use
+entry modification times and keep the newest matching entries as configured.
+`decay` is a dry run unless you pass `--apply`; removals and a summary are appended
+to `<state>/logs/decay.jsonl`. Protected paths and symlinks are skipped.
+
+If `<config>/decay.json` exists, it replaces the seed policy entirely. Copy the
+seed there to customize it or add rules for pack logs, and list the pack's database
+and outbox/sent/failed directories under `never`. Database rows are pruned
+separately through the `retention` block of `config.json` during normal
+`trend-watch run` executions.
 
 ## Configuration
 
@@ -480,6 +495,7 @@ trend-watcher/
 ├── trend_watch/
 │   ├── cli.py                   # argparse entry point and subcommands
 │   ├── config.py                # path resolution, config merge and validation, domains
+│   ├── decay.py                 # state file retention (dry-run unless --apply)
 │   ├── setup.py                 # setup, launchd/cron scheduler, status
 │   ├── pipeline.py              # fetch -> score -> classify -> draft -> deliver
 │   ├── packs.py                 # optional nudge-only alert packs (discovery, scoring, nudges)
@@ -500,6 +516,7 @@ trend-watcher/
 │   └── hooks/                   # notify / publish / external drafter stubs
 ├── seed/
 │   ├── config.json              # every default setting
+│   ├── decay.json               # default state file retention policy
 │   └── domains/*.json           # starter domains copied by init/setup
 ├── examples/packs/
 │   ├── README.md                # full alert pack schema

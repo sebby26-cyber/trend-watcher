@@ -67,6 +67,8 @@ def parser():
     commands.add_parser("migrate", help="apply pending forward-only state.db migrations (backup first)")
     commands.add_parser("backup", help="online backup of state.db to <state>/backups").add_argument("--dest")
     commands.add_parser("restore", help="archive the current state.db, then restore a backup").add_argument("backup_file")
+    commands.add_parser("decay", help="file retention for the state dir (dry-run unless --apply)").add_argument(
+        "--apply", action="store_true", help="remove eligible files and log them to logs/decay.jsonl")
     pack = commands.add_parser("pack", help="list or evaluate optional alert packs")
     pack.add_argument("name", help="pack name, or list")
     pack.add_argument("operation", nargs="?", choices=("run", "report", "harvest"))
@@ -85,6 +87,8 @@ def mutating(args):
         return args.state != "status"
     if args.command == "domains":
         return args.operation in ("add", "archive")
+    if args.command == "decay":
+        return args.apply
     return True
 
 
@@ -154,6 +158,10 @@ def dispatch(args, paths):
     if args.command == "backup":
         from .backup import backup
         print(backup(paths, args.dest))
+        return 0
+    if args.command == "decay":
+        from .decay import decay
+        decay(paths, apply=args.apply)
         return 0
     if args.command == "restore":
         from .backup import restore
