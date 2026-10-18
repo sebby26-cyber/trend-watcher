@@ -23,6 +23,8 @@
 - [The output is a signal](#the-output-is-a-signal)
 - [Features](#features)
 - [How it works](#how-it-works)
+  - [Token discipline](#token-discipline)
+  - [Optional lanes](#optional-lanes)
 - [Quick start](#quick-start)
 - [Usage](#usage)
   - [Everyday commands](#everyday-commands)
@@ -104,43 +106,42 @@ are required.
 
 ## How it works
 
-```mermaid
-flowchart LR
-    subgraph Sources["Sources (free, public)"]
-        A1["Hacker News / Reddit /<br/>GitHub Trending / arXiv"]
-        A2["Google News / Trends /<br/>Product Hunt / YouTube"]
-        A3["Polymarket / Kalshi /<br/>CoinGecko"]
-        A4["Drop-in adapters"]
-    end
+<div align="center">
+<img src="assets/how-it-works.svg" alt="Trend Watch pipeline. Public sources feed four stages: Fetch and Score are free and use zero tokens; Classify and Draft call the Jev model under a daily budget. The pipeline writes three signal files: a Markdown digest, a JSONL feed and Markdown template drafts." width="860">
+</div>
 
-    subgraph Local["Local, zero tokens"]
-        S[("SQLite state")]
-        SC["Score: rank pct, velocity,<br/>co-occurrence, freshness"]
-    end
+Trend Watch is a short pipeline that runs on every tick. The first two stages cost
+nothing. The last two spend tokens, and only inside a daily budget.
 
-    subgraph Jev["TypeSafe Jev (budgeted)"]
-        C["Closed-set classification"]
-        D["Hook and tone selection"]
-    end
+| # | Stage | What happens | Cost | Code |
+|---|---|---|---|---|
+| 1 | **Fetch** | Adapters pull public JSON or RSS with your User-Agent, a 15 s timeout and up to 2 exponential retries on 429 and 5xx. A failing source gets a growing cooldown and never fails the run. | Free | [`adapters/`](trend_watch/adapters), [`http.py`](trend_watch/http.py) |
+| 2 | **Score** | URLs and titles are normalized and de-duplicated. Each item scores 0 to 1 from platform rank percentile (0.35), velocity (0.30), cross-platform co-occurrence (0.15) and freshness (0.20). Past 6 h the score decays; past 48 h an item can never become a candidate. A candidate needs 0.55 or more, and is never sent twice. | Free | [`scoring.py`](trend_watch/scoring.py), [`state.py`](trend_watch/state.py) |
+| 3 | **Classify** | Up to 15 candidates go to Jev in one batched request of typed questions: domain, lane, strength, reason, angle and action. Every answer comes from a closed set, and item text enters only as `state`, never as instructions. Answers below 0.5 confidence are marked `?`. | Budgeted | [`jev.py`](trend_watch/jev.py) |
+| 4 | **Draft** | Items with strength 4 or higher in a `content` lane (at most 3 a day) get hooks and tones picked by Jev. Code fills editable templates for X, Threads, LinkedIn and blog posts. | Budgeted | [`drafts.py`](trend_watch/drafts.py) |
 
-    subgraph Out["Signal (no execution path)"]
-        O1["digests/*.md<br/>for you"]
-        O3["feeds/trading/*.jsonl<br/>for a machine"]
-        O2["drafts-for-approval/*.md<br/>inert text"]
-    end
+Scoring prefers items that are young and accelerating, because early is the whole
+point. With no key, or with `--no-llm`, stages 3 and 4 are skipped and you still get
+a scored, unclassified digest.
 
-    A1 & A2 & A3 & A4 --> S --> SC --> C --> O1
-    C --> O3
-    C --> D --> O2
-    S --> P["Alert packs (optional):<br/>cluster, score, gate"] --> N["Nudges in the pack outbox"]
+### Token discipline
 
-    E["SEC EDGAR 8-K Atom feed"] --> R["Resolve and match watchlist by CIK"] --> I["investment@shadow rules"] --> SR["Shadow report and records"]
-```
+Paid calls are the only thing that costs money, so every one passes through gates:
 
-1. **Fetch.** Adapters pull public JSON or RSS with a configured User-Agent, a timeout and up to two exponential retries on 429 and 5xx responses.
-2. **State and score.** URLs and titles are normalized and de-duplicated. Each score blends platform rank percentile, positive velocity, cross-platform co-occurrence and freshness. Old items decay; a hard age limit always excludes stale ones.
-3. **Classify.** Up to `max_candidates` items go into a single Jev request. Answers below `llm.min_confidence` are flagged with `?`.
-4. **Draft.** A second Jev request picks hooks and tones. Code then fills editable templates for X, Threads, LinkedIn and blog posts.
+- **No candidates, no call.** A tick with nothing to classify sends nothing.
+- **One classification an hour.** Jev is skipped if the last call was under `llm.min_interval_s` (3600 s) ago; candidates wait for the next eligible tick.
+- **Daily caps.** 30 calls and 400,000 input tokens per UTC day. At the cap the run falls back to an unclassified digest.
+- **Nothing is sent twice.** Results are cached by item hash, and an item is a candidate only once.
+- **One switch.** `trend-watch jev off` stops every paid call while fetching and scoring carry on.
+
+### Optional lanes
+
+Two separate lanes read the same local state. Neither is required.
+
+| Lane | What it does | Run it | Details |
+|---|---|---|---|
+| **Alert packs** | A nudge-only lane you write and keep outside the repo. It reads `state.db` read-only, clusters fresh stories and writes a short Markdown nudge to a local outbox only when a story clears a strict bar. | `trend-watch pack <name> run` | [Alert packs](#alert-packs) |
+| **SEC EDGAR 8-K engine** | A separate shadow engine: ingest the 8-K Atom feed, match filings to your watchlist by CIK, then apply deterministic item rules that classify each event `REVIEW`, `IGNORE` or `INCOMPLETE`. Off by default. | `trend-watch tick` | [SEC EDGAR 8-K engine](#sec-edgar-8-k-engine) |
 
 ## Quick start
 
@@ -550,6 +551,7 @@ prints the directories it resolved and pins them in the scheduler entry.
 trend-watcher/
 ├── assets/
 │   ├── banner.svg               # brand hero
+│   ├── how-it-works.svg         # pipeline diagram
 │   └── logo.svg                 # brand mark
 ├── bin/
 │   └── trend-watch              # CLI launcher (no install needed)
@@ -633,6 +635,7 @@ Every color carries a meaning that maps to how the tool behaves.
 | **Signal** | `#3DDC97` | **Primary.** Fresh signal, safe, surfaced |
 | **Pulse** | `#F5A623` | **Secondary.** Rising velocity, "needs review" |
 | **Haze** | `#E6EAF2` | Primary text on dark |
+| **Mist** | `#AEB7C6` | Secondary text, taglines and diagram body copy |
 | **Fog** | `#7D8798` | Muted text, the noise floor |
 
 Green is *observed / safe / surfaced*. Amber is *rising / attention / `REVIEW`*. Grey is

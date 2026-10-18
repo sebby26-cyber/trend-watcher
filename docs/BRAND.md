@@ -13,7 +13,7 @@
 Trend Watch has one job: **catch the rising signal before the crowd, then hand the
 decision to a human.** The brand exists to make that feeling legible — calm,
 instrument-grade, and quietly trustworthy. Nothing flashy. The tool is restrained
-by design (it never posts, never trades, and spends tokens sparingly), and the brand
+by design (it emits a signal and stops, and it spends tokens sparingly), and the brand
 should feel the same way.
 
 > **Name:** the product is **Trend Watch** (two words, title case).
@@ -47,6 +47,7 @@ tool actually behaves.
 | **Signal** | `#3DDC97` | **Primary.** Fresh signal, safe, surfaced | ![Signal](https://img.shields.io/badge/%20-3DDC97?style=flat-square&color=3DDC97) |
 | **Pulse** | `#F5A623` | **Secondary.** Rising velocity, "needs review" | ![Pulse](https://img.shields.io/badge/%20-F5A623?style=flat-square&color=F5A623) |
 | **Haze** | `#E6EAF2` | Primary text on dark | ![Haze](https://img.shields.io/badge/%20-E6EAF2?style=flat-square&color=E6EAF2) |
+| **Mist** | `#AEB7C6` | Secondary text, taglines and diagram body copy | ![Mist](https://img.shields.io/badge/%20-AEB7C6?style=flat-square&color=AEB7C6) |
 | **Fog** | `#7D8798` | Muted text, the noise floor | ![Fog](https://img.shields.io/badge/%20-7D8798?style=flat-square&color=7D8798) |
 
 **Semantic rule.** Green is *observed / safe / surfaced*. Amber is *rising / attention /
@@ -70,7 +71,7 @@ cursor block** may follow the wordmark as a terminal-native flourish — never m
 
 Plain-spoken operator. No hype. (It is literally the tool's own default drafting voice.)
 
-- **Say:** "Catch the signal before the crowd." · "It never posts, never trades." · "Early is the whole point."
+- **Say:** "Catch the signal before the crowd." · "It emits a signal and stops." · "Early is the whole point."
 - **Avoid:** "revolutionary", "AI-powered", "game-changing", exclamation marks, emoji in body copy.
 - Short declaratives. Lead with the useful fact. Let restraint do the talking.
 
@@ -93,6 +94,9 @@ Plain-spoken operator. No hype. (It is literally the tool's own default drafting
 |---|---|
 | [`assets/banner.svg`](../assets/banner.svg) | Hero banner (README header, social card) |
 | [`assets/logo.svg`](../assets/logo.svg) | Standalone mark (icon, favicon source) |
+| [`assets/how-it-works.svg`](../assets/how-it-works.svg) | Pipeline diagram (README "How it works") |
 
-Both are hand-authored SVG with no external font dependencies — they render the same on
-GitHub light and dark themes.
+All three are SVG with no external font dependencies. Wordmarks and diagram labels are
+JetBrains Mono converted to outlines, so they render the same everywhere and on both
+GitHub light and dark themes. Each sits on its own dark card, so none depend on the
+reader's theme.
