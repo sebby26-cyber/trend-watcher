@@ -9,7 +9,7 @@
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-3DDC97?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-3DDC97?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Dependencies](https://img.shields.io/badge/dependencies-none%20·%20stdlib%20only-3DDC97?style=flat-square)](#requirements)
-[![Tests](https://img.shields.io/badge/tests-168%20passing-3DDC97?style=flat-square)](#tests)
+[![Tests](https://github.com/sebby26-cyber/trend-watcher/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/sebby26-cyber/trend-watcher/actions/workflows/tests.yml)
 [![Output](https://img.shields.io/badge/output-signal%20only-F5A623?style=flat-square)](#the-output-is-a-signal)
 [![Version](https://img.shields.io/badge/version-0.1.0-7D8798?style=flat-square)](#roadmap)
 
@@ -549,6 +549,9 @@ prints the directories it resolved and pins them in the scheduler entry.
 
 ```text
 trend-watcher/
+├── .github/
+│   ├── workflows/tests.yml      # CI: tests on Python 3.9-3.13, Linux and macOS
+│   └── dependabot.yml           # keeps the pinned Actions current
 ├── assets/
 │   ├── banner.svg               # brand hero
 │   ├── how-it-works.svg         # pipeline diagram
@@ -613,6 +616,8 @@ python3 -m unittest discover -s tests
 ```
 
 To check the 8-K rules end to end offline, run `trend-watch replay`.
+
+CI runs on every push and pull request, on Python 3.9 to 3.13 on Linux and 3.12 on macOS. It runs the standard-library tests with nothing installed, then the full pytest suite, then an offline smoke test of the CLI (`init`, `domains validate`, `replay`). See [`.github/workflows/tests.yml`](.github/workflows/tests.yml).
 
 ## Brand
 
@@ -682,7 +687,7 @@ Contributions are welcome.
 
 1. Fork the repo and create a feature branch.
 2. Keep to the house rules: standard library only, Python 3.9 compatible, no secrets in code or config, and no file deletions. Item text must stay out of model instructions.
-3. Add or update tests and run `python3 -m pytest -q`.
+3. Add or update tests and run `python3 -m pytest -q`. CI runs the same suite on every pull request.
 4. Run `trend-watch domains validate` if you touched seeds or adapters.
 5. Open a pull request describing the change and its motivation.
 

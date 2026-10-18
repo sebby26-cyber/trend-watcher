@@ -1,0 +1,58 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        include:
+          # macOS is a supported platform (launchd scheduler), so cover it once.
+          - os: macos-latest
+            python-version: "3.12"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Nothing is installed yet, so this proves the standard-library-only claim.
+      - name: Run the standard-library tests
+        run: python -m unittest discover -s tests
+
+      - name: Run the full suite
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pytest -q
+
+      # Offline: no network, no API key, temporary directories only.
+      - name: Smoke-test the CLI
+        env:
+          TW_CONFIG_DIR: ${{ runner.temp }}/trend-watch/config
+          TW_STATE_DIR: ${{ runner.temp }}/trend-watch/state
+          TW_OUT_DIR: ${{ runner.temp }}/trend-watch/out
+        run: |
+          bin/trend-watch init
+          bin/trend-watch domains validate
+          bin/trend-watch replay
