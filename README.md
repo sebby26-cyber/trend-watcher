@@ -1,55 +1,106 @@
 <div align="center">
 
-# trend-watch
+<img src="assets/banner.svg" alt="Trend Watch" width="820">
 
-**An always-on research watcher that surfaces fresh, rising signals from public sources and leaves you a digest to review. It never posts or trades.**
+<br>
 
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-pytest-brightgreen)](#running-tests)
-[![Dependencies](https://img.shields.io/badge/dependencies-none%20(stdlib%20only)-lightgrey)](#quick-start)
+**An always-on research watcher that surfaces fresh, rising signals from public sources — and leaves the decision to you.**
+
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-3DDC97?style=flat-square)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.9%2B-3DDC97?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Dependencies](https://img.shields.io/badge/dependencies-none%20·%20stdlib%20only-3DDC97?style=flat-square)](#requirements)
+[![Tests](https://img.shields.io/badge/tests-168%20passing-3DDC97?style=flat-square)](#tests)
+[![Output](https://img.shields.io/badge/output-signal%20only-F5A623?style=flat-square)](#the-output-is-a-signal)
+[![Version](https://img.shields.io/badge/version-0.1.0-7D8798?style=flat-square)](#roadmap)
 
 </div>
 
 ---
 
-## What it does
+## Contents
 
-`trend-watch` polls public feeds (Hacker News, Reddit, GitHub Trending, Google News,
-arXiv, Product Hunt, YouTube, Polymarket, Kalshi, CoinGecko, Google Trends and more)
-on a schedule. It stores every observation in a local SQLite database and scores items
-locally on rank, velocity, cross-platform co-occurrence and freshness. Only the best
-candidates go to the [TypeSafe](https://typesafe.ai) **Jev** model, which answers
-typed, closed-set questions about them (domain, lane, reason, strength, direction)
-under a strict daily budget. The result is a daily Markdown digest, optional template
-drafts for you to review, and a JSONL research feed.
+- [What it is](#what-it-is)
+- [The output is a signal](#the-output-is-a-signal)
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Quick start](#quick-start)
+- [Usage](#usage)
+  - [Everyday commands](#everyday-commands)
+  - [Run options](#run-options)
+  - [Domains](#domains)
+  - [Alert packs](#alert-packs)
+  - [Source adapters](#source-adapters)
+  - [SEC EDGAR 8-K engine](#sec-edgar-8-k-engine)
+  - [Maintenance](#maintenance)
+- [Configuration](#configuration)
+- [Project structure](#project-structure)
+- [Tests](#tests)
+- [Brand](#brand)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Security](#security)
+- [Disclaimer](#disclaimer)
+- [License](#license)
 
-Optional **alert packs** read the same local state, cluster fresh stories and write
-a short Markdown nudge when a story clears a strict bar. You supply packs yourself;
-the repository ships one fictional example.
+## What it is
 
-A separate **shadow intelligence engine** ingests the SEC EDGAR 8-K Atom feed. It
-matches filings against your watchlist by CIK and applies deterministic 8-K item rules
-that classify each event as `REVIEW`, `IGNORE` or `INCOMPLETE`.
+Trend Watch polls public feeds — Hacker News, Reddit, GitHub Trending, Google News,
+arXiv, Product Hunt, YouTube, Polymarket, Kalshi, CoinGecko, Google Trends and more —
+on a schedule. Every observation lands in a local SQLite database, and items are scored
+**locally and for free** on platform rank, velocity, cross-platform co-occurrence and
+freshness.
+
+Only the strongest candidates go on to the [TypeSafe](https://typesafe.ai) **Jev**
+model, which answers typed, closed-set questions about them — domain, lane, reason,
+strength, direction — under a strict daily budget.
+
+What you get back is a signal: a daily Markdown digest, a machine-readable JSONL feed,
+and optional template drafts to review.
+
+> [!NOTE]
+> **Early is the whole point.** The scoring is tuned for items that are *young and
+> accelerating*, not items that are already big. Anything past a hard age limit can
+> never become a candidate.
+
+## The output is a signal
+
+Trend Watch **emits a signal and stops.** It has no execution path — nothing in the
+codebase connects a result to an action. The signal just comes out in two shapes,
+for two kinds of reader:
+
+| Output | Shape | Written for |
+|---|---|---|
+| `digests/YYYY-MM-DD.md` | Markdown — what's rising, why, how fast | **You.** Read it and decide. |
+| `feeds/trading/YYYY-MM-DD.jsonl` | One JSON object per item: score, velocity, age, platforms, assets, direction, strength, confidence | **A machine.** A downstream consumer — your own script, pipeline or LLM agent — parses it. |
+| `drafts-for-approval/YYYY-MM-DD.md` | Template post drafts, each headed `DRAFT — NOT POSTED — needs owner approval` | **You.** Text sitting in a file until you move it. |
+
+The JSONL feed is the machine-facing half of the signal: structured observations meant
+to be *read by a consumer you write*, not recommendations meant to be executed. It is
+machine-readable **and unwired** — Trend Watch writes it and never looks at it again.
+
+The only component that can touch the outside world is an **alert pack**, and only if
+you build it that way: packs write a short Markdown nudge into a local outbox, and run
+a command solely when you set `nudge.command` in a pack you wrote yourself. The
+bundled example sets it to `[]`, so it runs nothing. No packs ship enabled, and none
+are required.
 
 > [!IMPORTANT]
-> trend-watch is a research tool. It **never** posts, places orders or messages
-> anyone on its own. Every draft is marked `DRAFT — NOT POSTED — needs owner approval`,
-> and nothing connects the research feed to execution. Alert packs write nudges to a
-> local outbox; they run a command only when you set `nudge.command` in your own pack.
+> Trend Watch never posts, never places an order, and never messages anyone on its own.
+> Every draft is inert text; the research feed has no consumer; publishing hooks are
+> documented stubs the pipeline never calls.
 
 ## Features
 
-- **Zero dependencies.** Python 3.9+ standard library only. There is no `pip install` and no build step.
-- **Token-frugal by design.** Fetching and scoring are free. Paid Jev calls are gated by per-day call and token budgets and can be switched off with one command.
+- **Zero dependencies.** Python 3.9+ standard library only. No `pip install`, no build step.
+- **Token-frugal by design.** Fetching and scoring cost nothing. Paid Jev calls sit behind per-day call and token budgets and switch off with one command.
 - **Prompt-injection aware.** Item text goes only into the model's `state`, never into its instructions. Every answer is a typed Choice or Score, so the model writes no free-form prose.
-- **Plug-and-play domains.** One small JSON file per topic sets keywords, exclusions, sources, lanes, tickers, thresholds and drafting. You add or retire topics without touching code.
-- **Drop-in adapters.** Add a new source with about ten lines of Python in your config directory.
-- **Resilient.** One failing source or bad domain file never fails a run. Sources get exponential retries and growing cooldowns, and a state lock prevents overlapping runs.
-- **Scheduler included.** `setup` installs a macOS LaunchAgent or a Linux crontab line that runs twice an hour. It also gives you `enable`, `disable` and `status`.
-- **No deletes.** Retiring a domain moves its file into `domains/archive/`. Queued outputs move to `<state>/outbox-delivered/`.
-- **Bring-your-own alert packs.** `trend-watch pack <name> run` evaluates a pack you keep outside the repo and leaves nudge files for review. No packs are required.
-- **SEC EDGAR 8-K shadow engine.** It keeps immutable observations, versions amendments and records an audit trail with acknowledgements. A readiness gate and an offline fixture replay come with it.
+- **Plug-and-play domains.** One small JSON file per topic sets keywords, exclusions, sources, lanes, tickers, thresholds and drafting. Add or retire topics without touching code.
+- **Drop-in adapters.** Add a source in about ten lines of Python in your config directory.
+- **Resilient.** One failing source or malformed domain file never fails a run. Sources get exponential retries and growing cooldowns, and a state lock prevents overlapping runs.
+- **Scheduler included.** `setup` installs a macOS LaunchAgent or a Linux crontab line that runs twice an hour, plus `enable`, `disable` and `status`.
+- **No deletes.** Retiring a domain moves its file to `domains/archive/`. Delivered outputs move to `<state>/outbox-delivered/`.
+- **Bring-your-own alert packs.** Evaluate a pack you keep outside the repo and leave nudges for review.
+- **SEC EDGAR 8-K shadow engine.** Immutable observations, versioned amendments, an audit trail with acknowledgements, a readiness gate and an offline fixture replay.
 
 ## How it works
 
@@ -72,10 +123,10 @@ flowchart LR
         D[Hook and tone selection]
     end
 
-    subgraph Out["Outputs (for human review)"]
-        O1[digests/YYYY-MM-DD.md]
-        O2[drafts-for-approval/YYYY-MM-DD.md]
-        O3[feeds/trading/YYYY-MM-DD.jsonl]
+    subgraph Out["Signal (no execution path)"]
+        O1[digests/*.md<br/>for you]
+        O3[feeds/trading/*.jsonl<br/>for a machine]
+        O2[drafts-for-approval/*.md<br/>inert text]
     end
 
     A1 & A2 & A3 & A4 --> S --> SC --> C --> O1
@@ -86,43 +137,47 @@ flowchart LR
     E[SEC EDGAR 8-K Atom feed] --> R[Resolve and match watchlist by CIK] --> I[investment@shadow rules] --> SR[Shadow report and records]
 ```
 
-1. **Fetch.** Adapters fetch public JSON or RSS with a configured User-Agent, a timeout and up to two exponential retries on 429 and 5xx responses.
-2. **State and score.** URLs and titles are normalized and de-duplicated. Each score combines the platform rank percentile, positive velocity, cross-platform co-occurrence and freshness. Old items decay, and a hard age limit always excludes stale ones.
+1. **Fetch.** Adapters pull public JSON or RSS with a configured User-Agent, a timeout and up to two exponential retries on 429 and 5xx responses.
+2. **State and score.** URLs and titles are normalized and de-duplicated. Each score blends platform rank percentile, positive velocity, cross-platform co-occurrence and freshness. Old items decay; a hard age limit always excludes stale ones.
 3. **Classify.** Up to `max_candidates` items go into a single Jev request. Answers below `llm.min_confidence` are flagged with `?`.
 4. **Draft.** A second Jev request picks hooks and tones. Code then fills editable templates for X, Threads, LinkedIn and blog posts.
 
 ## Quick start
 
-**Requirements:** Python 3.9 or newer on macOS or Linux. A [TypeSafe](https://typesafe.ai) API key is optional; without one, runs are unclassified.
+### Requirements
+
+Python 3.9 or newer on macOS or Linux. Nothing else. A
+[TypeSafe](https://typesafe.ai) API key is optional — without one, runs are
+unclassified but everything else works.
+
+### Install
 
 ```sh
-# 1. Clone
 git clone https://github.com/sebby26-cyber/trend-watcher.git
 cd trend-watcher
 
-# 2. Optional: choose where settings, data and outputs live.
-#    Without these, config goes to ~/.config/trend-watch and data to
-#    ~/.local/share/trend-watch (see Configuration).
+# Optional: choose where settings, data and outputs live.
+# Defaults: config -> ~/.config/trend-watch, data -> ~/.local/share/trend-watch
 export TW_CONFIG_DIR="$HOME/.config/trend-watch"
 export TW_STATE_DIR="$HOME/.local/share/trend-watch"
 export TW_OUT_DIR="$HOME/trend-watch-output"
 
-# 3. Install the `trend-watch` command and the twice-hourly schedule
+# Install the `trend-watch` command and the twice-hourly schedule
 bin/trend-watch setup
 ```
 
 `setup` copies the seed config and domains into your config directory. It symlinks a
 `trend-watch` command into `/opt/homebrew/bin` or `/usr/local/bin` when either is on
-your `PATH` and writable, and into `~/.local/bin` otherwise. It also writes the
-scheduler entry, which runs at :07 and :37 every hour, with your resolved directories
-pinned in it (`TREND_WATCH_PACKS_DIR` and `XDG_CONFIG_HOME` are forwarded too when
-set). On macOS that entry is `~/Library/LaunchAgents/io.github.trend-watch.plist`
-(set `TREND_WATCH_LABEL` to use another label); on
-Linux it is a user crontab line ending in `# trend-watch-managed`. You can run `setup`
-again at any time. To install everything without turning the schedule on, use
-`setup --no-enable`.
+your `PATH` and writable, and into `~/.local/bin` otherwise. It writes the scheduler
+entry — which runs at `:07` and `:37` every hour — with your resolved directories
+pinned in it (`TREND_WATCH_PACKS_DIR` and `XDG_CONFIG_HOME` are forwarded when set).
 
-**Set your API key (optional).** Use the environment variable:
+On macOS that entry is `~/Library/LaunchAgents/io.github.trend-watch.plist` (set
+`TREND_WATCH_LABEL` to use another label); on Linux it is a user crontab line ending in
+`# trend-watch-managed`. Re-run `setup` any time. To install everything without turning
+the schedule on, use `setup --no-enable`.
+
+### Add a key (optional)
 
 ```sh
 export TYPESAFE_API_KEY="your-key-here"
@@ -136,13 +191,15 @@ security add-generic-password -s typesafe-api-key -a "$USER" -w "your-key-here"
 
 If no key is found, every run behaves as `--no-llm` and the report says so.
 
-**First run.** Try a dry run, which fetches and scores but writes no outputs and makes no Jev calls:
+### First run
+
+Start with a dry run — it fetches and scores, writes no outputs and makes no Jev calls:
 
 ```sh
 trend-watch run --domain ai-tech --dry-run
 ```
 
-Then do a real run and check its status:
+Then a real run, and check the result:
 
 ```sh
 trend-watch run
@@ -159,15 +216,15 @@ trend-watch status
 
 | Command | What it does |
 |---|---|
-| `trend-watch status` | Shows whether the schedule and Jev are on, the last run, today's Jev budget and where outputs are |
-| `trend-watch run` | Runs one tick now |
-| `trend-watch jev off` / `jev on` / `jev` | Stops, resumes or shows paid Jev calls; everything else keeps running |
-| `trend-watch disable` / `enable` | Stops or restarts the scheduled job |
-| `trend-watch budget` | Shows today's Jev calls and tokens against the limits |
-| `trend-watch flush` | Moves outputs that were queued in the outbox into the outputs folder |
-| `trend-watch decay` | Previews eligible state files; add `--apply` to remove them |
-| `trend-watch init` | Creates any missing config from the seeds; it never overwrites your edits |
-| `trend-watch pack list` | Lists the alert packs found on the pack search path |
+| `trend-watch status` | Whether the schedule and Jev are on, the last run, today's budget, where outputs are |
+| `trend-watch run` | Run one tick now |
+| `trend-watch jev off` / `jev on` / `jev` | Stop, resume or show paid Jev calls; everything else keeps running |
+| `trend-watch disable` / `enable` | Stop or restart the scheduled job |
+| `trend-watch budget` | Today's Jev calls and tokens against the limits |
+| `trend-watch flush` | Move outputs queued in the outbox into the outputs folder |
+| `trend-watch decay` | Preview eligible state files; add `--apply` to remove them |
+| `trend-watch init` | Create any missing config from the seeds; never overwrites your edits |
+| `trend-watch pack list` | List the alert packs found on the pack search path |
 
 ### Run options
 
@@ -180,11 +237,11 @@ trend-watch run --max-candidates 5              # cap the candidates sent to Jev
 ```
 
 A dry run still records fetch and score history in SQLite, so later runs can measure
-velocity. It writes no digest, drafts, feed or outbox, and it never calls Jev. Source
-rate limits still apply, so a source fetched moments ago may be skipped.
+velocity. It writes no digest, drafts, feed or outbox, and never calls Jev. Source rate
+limits still apply, so a source fetched moments ago may be skipped.
 
 A dry run prints its report on stdout; a normal run prints the same report on stderr.
-Example dry-run report (numbers are illustrative):
+Example dry-run report (numbers illustrative):
 
 ```text
 source hackernews: ok | items=60 | errors=0
@@ -214,7 +271,7 @@ Today's Jev budget: 2026-10-13: calls 3/30, tokens 15630/400000, draft_calls 1 (
 Outputs: /home/you/trend-watch-output
 ```
 
-### Add or retire a domain
+### Domains
 
 ```sh
 trend-watch domains list                 # active and archived domains
@@ -225,7 +282,7 @@ trend-watch sources list                 # adapters, their origin, rate floor an
 ```
 
 A domain is one JSON file. Every key is optional and inherits from `config.json`.
-Nested maps merge with the defaults, and lists replace them:
+Nested maps merge with the defaults; lists replace them:
 
 ```json
 {
@@ -247,42 +304,41 @@ Nested maps merge with the defaults, and lists replace them:
 }
 ```
 
-Lanes are `content`, `trading` or both. Unclassified candidates go into the JSONL
-research feed only for domains that have a `trading` lane. The seed set includes
-`ai-tech`, `business-startups`, `crypto`, `culture-viral` and `markets-trading`.
+Lanes are `content`, `trading` or both. Unclassified candidates reach the JSONL feed
+only for domains with a `trading` lane. The seed set includes `ai-tech`,
+`business-startups`, `crypto`, `culture-viral` and `markets-trading`.
 
-These are the fields a domain may contain. All of them are optional and inherit from
-`config.json`, and any other key is rejected:
+Every field a domain may contain — all optional, inheriting from `config.json`, with
+any other key rejected:
 
 | Field | Type | Rules |
 |---|---|---|
-| `name` | string | A lowercase slug (`[a-z0-9][a-z0-9_-]*`), unique, not `none`. It defaults to the file name |
+| `name` | string | Lowercase slug (`[a-z0-9][a-z0-9_-]*`), unique, not `none`. Defaults to the file name |
 | `enabled` | bool | Disabled domains still appear in `domains list` |
 | `keywords` | list of strings | Matched on word boundaries |
 | `exclude` | list of strings | Phrases that veto a match |
-| `sources` | object | Keys must be registered adapters (see `trend-watch sources list`), and values are parameter objects |
+| `sources` | object | Keys must be registered adapters (see `sources list`); values are parameter objects |
 | `lanes` | list | `content` and/or `trading` |
 | `tickers` | list of strings | Extra asset symbols to recognize |
 | `thresholds.candidate_score` | number | Between 0 and 1 |
-| `freshness` | object | `max_age_h`, `hard_max_age_h` (must be at least `max_age_h`) and `cooccurrence_h` |
-| `weights` | object | `rank_pct`, `velocity_pct`, `cooccurrence` and `freshness`, with a positive sum |
+| `freshness` | object | `max_age_h`, `hard_max_age_h` (≥ `max_age_h`) and `cooccurrence_h` |
+| `weights` | object | `rank_pct`, `velocity_pct`, `cooccurrence`, `freshness`, with a positive sum |
 | `max_candidates` | integer | Per-domain candidate cap |
-| `drafts` | object | `platforms` from `x`, `threads`, `linkedin`, `blog`, plus `voice`, `tones`, `templates` and `max_per_day` |
-| `_help` | any | A free-form note that validation ignores |
+| `drafts` | object | `platforms` from `x`, `threads`, `linkedin`, `blog`, plus `voice`, `tones`, `templates`, `max_per_day` |
+| `_help` | any | Free-form note the validator ignores |
 
-### Alert packs (bring your own)
+### Alert packs
 
-Alert packs are optional and pluggable. A pack is a nudge-only alert lane that you
-write for your own interests and keep outside the repository. It reads the shared
-`state.db` read-only, clusters fresh stories, scores velocity, relevance, source
-quality, novelty and audience fit, and writes a short Markdown nudge only when a
-story clears a strict bar. It never drafts, posts or trades. No packs are required,
-and none for specific people or accounts ship with the project.
+Alert packs are optional and pluggable. A pack is a nudge-only lane you write for your
+own interests and keep outside the repository. It reads the shared `state.db`
+read-only, clusters fresh stories, scores velocity, relevance, source quality, novelty
+and audience fit, and writes a short Markdown nudge only when a story clears a strict
+bar. It never drafts, posts or trades. No packs are required, and none for specific
+people or accounts ship with the project.
 
-A pack is `<dir>/<name>.json`, and its domains live beside it in `<dir>/domains/`.
-Pack names are lowercase slugs that start with a letter; `list` is reserved.
-Discovery searches these directories in order, and the first `<name>.json` found
-wins for each name:
+A pack is `<dir>/<name>.json`, with its domains beside it in `<dir>/domains/`. Pack
+names are lowercase slugs starting with a letter; `list` is reserved. Discovery searches
+these directories in order, and the first `<name>.json` found wins:
 
 | Order | Where | Notes |
 |---|---|---|
@@ -292,10 +348,10 @@ wins for each name:
 | 4 | `$XDG_CONFIG_HOME/trend-watch/packs/` | Defaults to `~/.config/trend-watch/packs/` |
 | 5 | `packs/` in the checkout | Gitignored, so local packs are never committed |
 
-The shipped example is [`examples/packs/example.json`](examples/packs/example.json),
-a fictional space-industry pack with one domain. Every pack setting is documented
-in [`examples/packs/README.md`](examples/packs/README.md). Copy the pack together
-with its `domains/` folder to get started:
+The shipped example is [`examples/packs/example.json`](examples/packs/example.json), a
+fictional space-industry pack with one domain. Every setting is documented in
+[`examples/packs/README.md`](examples/packs/README.md). Copy the pack together with its
+`domains/` folder:
 
 ```sh
 PACKS="${XDG_CONFIG_HOME:-$HOME/.config}/trend-watch/packs"
@@ -314,10 +370,10 @@ trend-watch --packs-dir examples/packs run --no-llm --no-drafts
 ```
 
 A pack's domains resolve from `<dir>/domains/<domain>.json` first, then from the
-repository's `seed/domains/`. The domains of enabled packs join the normal
-collector on `run`, while your own edits in `<config>/domains/` and archived domains
-keep precedence. A file at `<config>/<name>.json` deep-merges over the pack (nested
-maps merge, lists replace), so you can tune a pack without editing it.
+repository's `seed/domains/`. The domains of enabled packs join the normal collector on
+`run`, while your own edits in `<config>/domains/` and archived domains keep precedence.
+A file at `<config>/<name>.json` deep-merges over the pack (nested maps merge, lists
+replace), so you can tune a pack without editing it.
 
 Evaluate a pack after a collector run, since it needs the shared `state.db`:
 
@@ -332,16 +388,16 @@ trend-watch pack my-pack harvest                # read reply verdicts when tunin
 
 `report` covers the last 24 hours unless you pass `--hours`. Pack state lives in
 `<state>/<name>/`: `<name>.db`, `outbox/`, `sent/`, `failed/` and day-named
-`log/*.jsonl` files. With `"nudge": {"command": []}`, as in the example, nudges stay
-in the pack's `outbox/`. If you set `nudge.command` to an argv list, it runs without a shell
-and receives `{marker}`, `{action}` and `{file}` substitutions. The scheduler does
+`log/*.jsonl` files. With `"nudge": {"command": []}`, as in the example, nudges stay in
+the pack's `outbox/`. If you set `nudge.command` to an argv list, it runs without a
+shell and receives `{marker}`, `{action}` and `{file}` substitutions. The scheduler does
 not run packs, so call `trend-watch pack <name> run` from your own wrapper (see
-`TREND_WATCH_WRAPPER` under [Configuration](#configuration)) or cron entry after
-each collector run.
+`TREND_WATCH_WRAPPER` under [Configuration](#configuration)) or cron entry after each
+collector run.
 
-### Adding a source adapter
+### Source adapters
 
-Put trusted Python code in `<config>/adapters/local_feed.py`:
+Put trusted Python in `<config>/adapters/local_feed.py`:
 
 ```python
 NAME = "local_feed"
@@ -358,15 +414,18 @@ def fetch(params: dict, ctx) -> list[dict]:
 Reference it from a domain with `"sources": {"local_feed": {"url": "https://…"}}`.
 Each returned item needs a non-empty `title` and `url`. Optional fields are a numeric
 `score`, a positive integer `rank`, `published` (epoch or ISO), `snippet`, an `extra`
-dict and `domain_hint`. `ctx.get_json` and `ctx.get_text` apply the shared HTTP
-policy, and `ctx.collect(origins, callback)` keeps the origins that succeed when
-others fail.
+dict and `domain_hint`. `ctx.get_json` and `ctx.get_text` apply the shared HTTP policy,
+and `ctx.collect(origins, callback)` keeps the origins that succeed when others fail.
 
-### SEC EDGAR 8-K shadow engine
+### SEC EDGAR 8-K engine
 
-The engine is **disabled by default** and refuses to fetch live data until
+A separate shadow engine ingests the SEC EDGAR 8-K Atom feed, matches filings against
+your watchlist by CIK, and applies deterministic 8-K item rules that classify each event
+as `REVIEW`, `IGNORE` or `INCOMPLETE`.
+
+It is **disabled by default** and refuses to fetch live data until
 `intake.sec_edgar.user_agent` contains a real contact email, as SEC fair access
-requires. To enable it, first edit `<config>/config.json`:
+requires. To enable it, edit `<config>/config.json`:
 
 ```json
 "intake": {
@@ -413,17 +472,16 @@ trend-watch decay                # preview eligible files and the space they wou
 trend-watch decay --apply        # remove eligible entries and log the results
 ```
 
-File retention defaults to [`seed/decay.json`](seed/decay.json): old run logs,
-copies of outputs already delivered by `flush`, and database backups. Rules use
-entry modification times and keep the newest matching entries as configured.
-`decay` is a dry run unless you pass `--apply`; removals and a summary are appended
-to `<state>/logs/decay.jsonl`. Protected paths and symlinks are skipped.
+File retention defaults to [`seed/decay.json`](seed/decay.json): old run logs, copies of
+outputs already delivered by `flush`, and database backups. Rules use entry modification
+times and keep the newest matching entries as configured. `decay` is a dry run unless
+you pass `--apply`; removals and a summary are appended to `<state>/logs/decay.jsonl`.
+Protected paths and symlinks are skipped.
 
-If `<config>/decay.json` exists, it replaces the seed policy entirely. Copy the
-seed there to customize it or add rules for pack logs, and list the pack's database
-and outbox/sent/failed directories under `never`. Database rows are pruned
-separately through the `retention` block of `config.json` during normal
-`trend-watch run` executions.
+If `<config>/decay.json` exists, it replaces the seed policy entirely. Copy the seed
+there to customize it or add rules for pack logs, and list the pack's database and
+outbox/sent/failed directories under `never`. Database rows are pruned separately
+through the `retention` block of `config.json` during normal `run` executions.
 
 ## Configuration
 
@@ -435,24 +493,24 @@ Unknown keys are rejected.
 
 | Option | Env var | Default | Description |
 |---|---|---|---|
-| Config directory | `TW_CONFIG_DIR` | `~/.config/trend-watch` (`$XDG_CONFIG_HOME/trend-watch`) | `config.json`, `domains/`, `domains/archive/`, `adapters/`, `watchlist.json`, pack overrides `<name>.json` |
-| State directory | `TW_STATE_DIR` | `~/.local/share/trend-watch` (`$XDG_DATA_HOME/trend-watch`) | `state.db`, `last-run.json`, `logs/`, `outbox/`, `feeds/trading/`, `shadow/`, `backups/`, one folder per pack |
+| Config directory | `TW_CONFIG_DIR` | `~/.config/trend-watch` | `config.json`, `domains/`, `domains/archive/`, `adapters/`, `watchlist.json`, pack overrides |
+| State directory | `TW_STATE_DIR` | `~/.local/share/trend-watch` | `state.db`, `last-run.json`, `logs/`, `outbox/`, `feeds/trading/`, `shadow/`, `backups/`, one folder per pack |
 | Output directory | `TW_OUT_DIR` | `<state>/out` | `digests/` and `drafts-for-approval/` Markdown files |
-| Single home | `TREND_WATCH_HOME` | unset | One root for everything: `<home>/config`, `<home>` as the state directory, and `<home>/out` |
-| Pack search path | `TREND_WATCH_PACKS_DIR` | unset | Extra pack directories, separated by `:`; see [Alert packs](#alert-packs-bring-your-own) for the full order |
-| Scheduler label | `TREND_WATCH_LABEL` | `io.github.trend-watch` | launchd label and plist name used by `setup`, `enable`, `disable` and `status` |
-| Scheduler wrapper | `TREND_WATCH_WRAPPER` | unset (optional) | Executable the schedule runs instead of `bin/trend-watch run`; `status` then reports `mode: custom wrapper` |
+| Single home | `TREND_WATCH_HOME` | unset | One root for everything: `<home>/config`, `<home>` as state, `<home>/out` |
+| Pack search path | `TREND_WATCH_PACKS_DIR` | unset | Extra pack directories, separated by `:`; see [Alert packs](#alert-packs) |
+| Scheduler label | `TREND_WATCH_LABEL` | `io.github.trend-watch` | launchd label and plist name used by `setup`, `enable`, `disable`, `status` |
+| Scheduler wrapper | `TREND_WATCH_WRAPPER` | unset | Executable the schedule runs instead of `bin/trend-watch run`; `status` then reports `mode: custom wrapper` |
 | API key | `TYPESAFE_API_KEY` | none | TypeSafe API key; if unset, the Keychain is checked next |
 
-Each directory is resolved on its own, in this order:
+Each directory resolves on its own, in this order:
 
 - **Config:** `TW_CONFIG_DIR`, then `$TREND_WATCH_HOME/config`, then `$XDG_CONFIG_HOME/trend-watch`, then `~/.config/trend-watch`.
 - **State:** `TW_STATE_DIR`, then `$TREND_WATCH_HOME`, then `$XDG_DATA_HOME/trend-watch`, then `~/.local/share/trend-watch`.
 - **Output:** `TW_OUT_DIR`, then `$TREND_WATCH_HOME/out`, then `out/` inside the resolved state directory.
 
-So with `TREND_WATCH_HOME` set, a `TW_*` variable still wins for its own directory,
-and output stays at `$TREND_WATCH_HOME/out` even if `TW_STATE_DIR` points elsewhere.
-`setup` prints the directories it resolved and pins them in the scheduler entry.
+So with `TREND_WATCH_HOME` set, a `TW_*` variable still wins for its own directory, and
+output stays at `$TREND_WATCH_HOME/out` even if `TW_STATE_DIR` points elsewhere. `setup`
+prints the directories it resolved and pins them in the scheduler entry.
 
 ### Settings
 
@@ -467,7 +525,7 @@ and output stays at `$TREND_WATCH_HOME/out` even if `TW_STATE_DIR` points elsewh
 | `budget.max_calls_per_day` | `30` | Daily Jev call cap (UTC day), including drafts and retries |
 | `budget.max_input_tokens_per_day` | `400000` | Daily input-token cap |
 | `max_candidates` | `15` | Items sent per classification request |
-| `thresholds.candidate_score` | `0.55` | Minimum score (0 to 1) for an item to become a candidate |
+| `thresholds.candidate_score` | `0.55` | Minimum score (0–1) for an item to become a candidate |
 | `freshness.max_age_h` / `hard_max_age_h` | `6` / `48` | Freshness window and hard age cutoff, in hours |
 | `weights.*` | `0.35 / 0.30 / 0.15 / 0.20` | Weights for rank, velocity, co-occurrence and freshness (normalized) |
 | `drafts.max_per_day` | `3` | Daily draft cap |
@@ -475,21 +533,24 @@ and output stays at `$TREND_WATCH_HOME/out` even if `TW_STATE_DIR` points elsewh
 | `http.user_agent` | generic string | User-Agent sent to sources; set your own |
 | `http.timeout_s` / `retries` | `15` / `2` | Request timeout and retry count |
 | `intake.sec_edgar.enabled` | `false` | Turns on the EDGAR 8-K intake |
-| `intake.sec_edgar.user_agent` | placeholder | Must include your contact email, for example `you@example.com` |
-| `intake.sec_edgar.request_interval_s` | `0.2` | Seconds between SEC requests; the minimum allowed is `0.1` (10 requests per second) |
+| `intake.sec_edgar.user_agent` | placeholder | Must include your contact email |
+| `intake.sec_edgar.request_interval_s` | `0.2` | Seconds between SEC requests; minimum `0.1` (10 req/s) |
 | `investment.watchlist_path` | `watchlist.json` | Watchlist path, relative to the config directory |
 | `retention.days` | `30` | Retention for state tables |
 | `hooks.notify_enabled` / `publish_enabled` | `false` | Stub hooks only. `publish` is never called |
 
 > [!NOTE]
 > UTC defines output file names and budget days; the schedule uses local wall-clock
-> time. On macOS, if privacy protection blocks a write to the output directory, the
-> file is queued in `<state>/outbox/`. `trend-watch flush` delivers it later.
+> time. On macOS, if privacy protection blocks a write to the output directory, the file
+> is queued in `<state>/outbox/`. `trend-watch flush` delivers it later.
 
 ## Project structure
 
 ```text
 trend-watcher/
+├── assets/
+│   ├── banner.svg               # brand hero
+│   └── logo.svg                 # brand mark
 ├── bin/
 │   └── trend-watch              # CLI launcher (no install needed)
 ├── trend_watch/
@@ -498,7 +559,7 @@ trend-watcher/
 │   ├── decay.py                 # state file retention (dry-run unless --apply)
 │   ├── setup.py                 # setup, launchd/cron scheduler, status
 │   ├── pipeline.py              # fetch -> score -> classify -> draft -> deliver
-│   ├── packs.py                 # optional nudge-only alert packs (discovery, scoring, nudges)
+│   ├── packs.py                 # optional nudge-only alert packs
 │   ├── registry.py              # adapter discovery (built-in and drop-in)
 │   ├── http.py                  # shared HTTP policy, retries, cooldowns
 │   ├── scoring.py               # normalization, velocity, composite score
@@ -516,38 +577,100 @@ trend-watcher/
 │   └── hooks/                   # notify / publish / external drafter stubs
 ├── seed/
 │   ├── config.json              # every default setting
-│   ├── decay.json               # default state file retention policy
+│   ├── decay.json               # default retention policy
 │   └── domains/*.json           # starter domains copied by init/setup
-├── examples/packs/
-│   ├── README.md                # full alert pack schema
-│   ├── example.json             # fictional starter pack to copy
-│   └── domains/example-launches.json
+├── examples/packs/              # pack schema, example pack and its domain
 ├── fixtures/edgar-8k/           # offline 8-K fixtures and a sample watchlist
-├── tests/                       # pytest suite (conftest.py isolates pack discovery)
-├── docs/                        # DESIGN-SPEC.md and R1-SPEC-DELTAS.md
-├── packs/                       # optional local packs (gitignored, not in the repo)
+├── tests/                       # test suite (conftest.py isolates pack discovery)
+├── docs/
+│   ├── BRAND.md                 # brand guide
+│   ├── DESIGN-SPEC.md           # build spec
+│   └── R1-SPEC-DELTAS.md
+├── packs/                       # optional local packs (gitignored)
 └── LICENSE                      # GNU GPL v3.0
 ```
 
-## Running tests
+## Tests
 
 ```sh
 python3 -m pytest -q
 ```
 
-The suite needs no secrets or network access. It runs in temporary directories with
-fake adapters, fixture RSS and JSON, and fake Jev HTTP responses, and it blocks real
-HTTP. `tests/conftest.py` points pack discovery at an empty directory, so packs you
-have installed never leak into a test run. pytest is the only test dependency; the
-tool itself needs nothing beyond the standard library. Most tests are also plain
-`unittest` cases, so `python3 -m unittest discover -s tests` runs that subset
-without pytest. To check the 8-K rules end to end offline, run `trend-watch replay`.
+168 tests, no secrets and no network access. They run in temporary directories with
+fake adapters, fixture RSS and JSON, and fake Jev HTTP responses, and real HTTP is
+blocked. `tests/conftest.py` points pack discovery at an empty directory, so packs you
+have installed never leak into a test run.
+
+pytest is the only test dependency; the tool itself needs nothing beyond the standard
+library. Most tests are also plain `unittest` cases, so this runs that subset (162 of
+them) with no dependencies at all:
+
+```sh
+python3 -m unittest discover -s tests
+```
+
+To check the 8-K rules end to end offline, run `trend-watch replay`.
+
+## Brand
+
+Trend Watch is **instrument-grade, terminal-native and calm**. The mark tells the whole
+story in one glance: a flat noise floor spikes into a rising signal, with a radar ping
+opening at the peak — *a trend, caught early, and watched.*
+
+<div align="center">
+<img src="assets/logo.svg" alt="Trend Watch mark" width="88">
+</div>
+
+### Palette — "Signal"
+
+Every color carries a meaning that maps to how the tool behaves.
+
+| Token | Hex | Role |
+|---|---|---|
+| **Ink** | `#0B0E14` | Base background, the night watch |
+| **Slate** | `#141A24` | Panels, code surfaces |
+| **Edge** | `#222A38` | Borders, grid lines |
+| **Signal** | `#3DDC97` | **Primary.** Fresh signal, safe, surfaced |
+| **Pulse** | `#F5A623` | **Secondary.** Rising velocity, "needs review" |
+| **Haze** | `#E6EAF2` | Primary text on dark |
+| **Fog** | `#7D8798` | Muted text, the noise floor |
+
+Green is *observed / safe / surfaced*. Amber is *rising / attention / `REVIEW`*. Grey is
+*noise*. That's the same vocabulary the shadow engine and the scoring already use, so
+the palette teaches itself.
+
+### Typography
+
+| Use | Typeface | Fallback |
+|---|---|---|
+| Wordmark, code, UI chrome | **JetBrains Mono** | `ui-monospace, "SF Mono", Menlo, monospace` |
+| Body and docs | **Inter** | `system-ui, -apple-system, sans-serif` |
+
+The wordmark is JetBrains Mono Bold with tight tracking, optionally followed by a single
+Signal-green cursor block.
+
+### Voice
+
+Plain-spoken operator. No hype — the same voice the tool drafts in by default. Short
+declaratives, useful fact first. Avoid "revolutionary", "AI-powered", "game-changing".
+
+- Primary tagline — *Catch the signal before the crowd — then decide for yourself.*
+- Short form — *Signal, early. The decision stays yours.*
+
+### Naming
+
+The product is **Trend Watch** (two words). The command is `trend-watch` and the
+repository is `trend-watcher` — those keep their hyphens because they are literal
+identifiers, not the brand name.
+
+The full guide, including logo clear space and misuse rules, is in
+[`docs/BRAND.md`](docs/BRAND.md).
 
 ## Roadmap
 
 - **Shadow to production for the 8-K engine.** Production rendering stays off until `trend-watch readiness` passes: 14 shadow days, 20 spot-checks and REVIEW precision of at least 0.8.
 - **Key-based adapters.** `x`, `tiktok` and `instagram` are registered stubs that still need an API key or a scraper.
-- **External drafter backend.** `drafts.backend: "external"` calls a documented stub (`hooks/drafter_external.py`), and no generative backend ships yet.
+- **External drafter backend.** `drafts.backend: "external"` calls a documented stub (`hooks/drafter_external.py`); no generative backend ships yet.
 
 ## Contributing
 
@@ -557,25 +680,41 @@ Contributions are welcome.
 2. Keep to the house rules: standard library only, Python 3.9 compatible, no secrets in code or config, and no file deletions. Item text must stay out of model instructions.
 3. Add or update tests and run `python3 -m pytest -q`.
 4. Run `trend-watch domains validate` if you touched seeds or adapters.
-5. Open a pull request that describes the change and its motivation.
+5. Open a pull request describing the change and its motivation.
 
-By contributing, you agree that your contributions are licensed under the
-GNU General Public License v3.0.
+By contributing, you agree that your contributions are licensed under the GNU General
+Public License v3.0.
+
+## Security
+
+Trend Watch holds no credentials of its own. The TypeSafe key is read from the
+environment or the macOS Keychain and is never written to config or logs. Item text from
+public sources is treated as untrusted data: it enters the model's `state` only, never
+its instructions, and every answer is a closed-set Choice or Score.
+
+Found a vulnerability? Please open a
+[security advisory](https://github.com/sebby26-cyber/trend-watcher/security/advisories/new)
+rather than a public issue.
 
 ## Disclaimer
 
-trend-watch is a research and monitoring tool. **Nothing it produces is financial,
-investment or trading advice.** Classifications, "direction" fields and research
-feeds are automated observations that can be wrong, so verify primary sources
-before you act on them.
+Trend Watch is a research and monitoring tool. **Nothing it produces is financial,
+investment or trading advice.** Classifications, "direction" fields and research feeds
+are automated observations that can be wrong, so verify primary sources before acting on
+them.
 
 When you enable SEC EDGAR intake, follow the
 [SEC's fair access policy](https://www.sec.gov/os/accessing-edgar-data): send a
-User-Agent with your contact email and stay at or below 10 requests per second.
-trend-watch enforces a minimum request interval and refuses to fetch with a
-placeholder User-Agent. You are still responsible for how you use it. Respect the
-terms of service and rate limits of every other source you configure.
+User-Agent with your contact email and stay at or below 10 requests per second. Trend
+Watch enforces a minimum request interval and refuses to fetch with a placeholder
+User-Agent. You are still responsible for how you use it. Respect the terms of service
+and rate limits of every source you configure.
 
 ## License
 
 Released under the [GNU General Public License v3.0](LICENSE).
+
+<div align="center">
+<br>
+<sub><b>Trend Watch</b> · Signal, early. The decision stays yours.</sub>
+</div>
