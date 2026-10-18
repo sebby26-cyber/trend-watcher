@@ -552,7 +552,8 @@ trend-watcher/
 ├── assets/
 │   ├── banner.svg               # brand hero
 │   ├── how-it-works.svg         # pipeline diagram
-│   └── logo.svg                 # brand mark
+│   ├── logo.svg                 # brand mark
+│   └── social-preview.png       # 1280x640 link-preview card
 ├── bin/
 │   └── trend-watch              # CLI launcher (no install needed)
 ├── trend_watch/

@@ -95,8 +95,9 @@ Plain-spoken operator. No hype. (It is literally the tool's own default drafting
 | [`assets/banner.svg`](../assets/banner.svg) | Hero banner (README header, social card) |
 | [`assets/logo.svg`](../assets/logo.svg) | Standalone mark (icon, favicon source) |
 | [`assets/how-it-works.svg`](../assets/how-it-works.svg) | Pipeline diagram (README "How it works") |
+| [`assets/social-preview.png`](../assets/social-preview.png) | 1280 × 640 social card for link previews. GitHub only accepts it by upload: Settings → General → Social preview |
 
-All three are SVG with no external font dependencies. Wordmarks and diagram labels are
-JetBrains Mono converted to outlines, so they render the same everywhere and on both
-GitHub light and dark themes. Each sits on its own dark card, so none depend on the
-reader's theme.
+The SVGs have no external font dependencies. Every piece of text in them is converted to
+outlines (JetBrains Mono for the wordmark, chips and diagram labels, Inter Medium for
+the tagline), so they render the same on every OS and on both GitHub light and dark
+themes. Each sits on its own dark card, so none depend on the reader's theme.
