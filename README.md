@@ -107,26 +107,26 @@ are required.
 ```mermaid
 flowchart LR
     subgraph Sources["Sources (free, public)"]
-        A1[Hacker News / Reddit /<br/>GitHub Trending / arXiv]
-        A2[Google News / Trends /<br/>Product Hunt / YouTube]
-        A3[Polymarket / Kalshi /<br/>CoinGecko]
-        A4[Drop-in adapters]
+        A1["Hacker News / Reddit /<br/>GitHub Trending / arXiv"]
+        A2["Google News / Trends /<br/>Product Hunt / YouTube"]
+        A3["Polymarket / Kalshi /<br/>CoinGecko"]
+        A4["Drop-in adapters"]
     end
 
     subgraph Local["Local, zero tokens"]
-        S[(SQLite state)]
-        SC[Score: rank pct, velocity,<br/>co-occurrence, freshness]
+        S[("SQLite state")]
+        SC["Score: rank pct, velocity,<br/>co-occurrence, freshness"]
     end
 
     subgraph Jev["TypeSafe Jev (budgeted)"]
-        C[Closed-set classification]
-        D[Hook and tone selection]
+        C["Closed-set classification"]
+        D["Hook and tone selection"]
     end
 
     subgraph Out["Signal (no execution path)"]
-        O1[digests/*.md<br/>for you]
-        O3[feeds/trading/*.jsonl<br/>for a machine]
-        O2[drafts-for-approval/*.md<br/>inert text]
+        O1["digests/*.md<br/>for you"]
+        O3["feeds/trading/*.jsonl<br/>for a machine"]
+        O2["drafts-for-approval/*.md<br/>inert text"]
     end
 
     A1 & A2 & A3 & A4 --> S --> SC --> C --> O1
@@ -134,7 +134,7 @@ flowchart LR
     C --> D --> O2
     S --> P["Alert packs (optional):<br/>cluster, score, gate"] --> N["Nudges in the pack outbox"]
 
-    E[SEC EDGAR 8-K Atom feed] --> R[Resolve and match watchlist by CIK] --> I[investment@shadow rules] --> SR[Shadow report and records]
+    E["SEC EDGAR 8-K Atom feed"] --> R["Resolve and match watchlist by CIK"] --> I["investment@shadow rules"] --> SR["Shadow report and records"]
 ```
 
 1. **Fetch.** Adapters pull public JSON or RSS with a configured User-Agent, a timeout and up to two exponential retries on 429 and 5xx responses.
