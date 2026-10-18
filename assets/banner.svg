@@ -52,5 +52,5 @@
   <rect x="332" y="248" width="620" height="2" fill="url(#tw-rule)" opacity="0.6"/>
 
   <!-- promise line -->
-  <text x="332" y="286" font-family="ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace" font-size="19" fill="#7D8798">always-on research  ·  zero dependencies  ·  <tspan fill="#3DDC97">never posts, never trades</tspan></text>
+  <text x="332" y="286" font-family="ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace" font-size="19" fill="#7D8798">always-on research  ·  zero dependencies  ·  <tspan fill="#3DDC97">signal only</tspan></text>
 </svg>
