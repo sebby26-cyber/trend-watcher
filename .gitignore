@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+.DS_Store
+# runtime data never lives in the repo
+*.db
+*.sqlite*
+state/
+outbox/
+feeds/
+logs/
+digests/
+drafts-for-approval/
+*.jsonl
+.env
+.env.*
+*.key
+*.pem
+secrets*
+
+/packs/
+.venv/
+.pytest_cache/
+*.egg-info/
+local/

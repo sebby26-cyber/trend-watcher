@@ -1,0 +1,283 @@
+{
+  "_help": "All settings reload on each run. Domains inherit these defaults. No secrets here.",
+  "enabled": true,
+  "keywords": [],
+  "exclude": [],
+  "sources": {},
+  "lanes": [
+    "content"
+  ],
+  "tickers": [],
+  "max_candidates": 15,
+  "thresholds": {
+    "candidate_score": 0.55
+  },
+  "weights": {
+    "rank_pct": 0.35,
+    "velocity_pct": 0.3,
+    "cooccurrence": 0.15,
+    "freshness": 0.2
+  },
+  "freshness": {
+    "max_age_h": 6,
+    "hard_max_age_h": 48,
+    "cooccurrence_h": 6
+  },
+  "http": {
+    "user_agent": "trend-watch/0.1.0 (+https://github.com/sebby26-cyber/trend-watcher) (contact: owner)",
+    "timeout_s": 15,
+    "retries": 2,
+    "backoff_s": 1,
+    "failure_threshold": 3,
+    "cooldown_s": 900,
+    "max_cooldown_s": 86400,
+    "min_interval_s": 900
+  },
+  "adapters": {
+    "hackernews": {
+      "limit": 60,
+      "min_interval_s": 900
+    },
+    "github_trending": {
+      "request_interval_s": 6.1,
+      "min_interval_s": 1800
+    },
+    "reddit": {
+      "listings": [
+        "hot"
+      ],
+      "request_interval_s": 2.0,
+      "user_agent": "trend-watch/0.1.0 (+https://github.com/sebby26-cyber/trend-watcher)",
+      "min_interval_s": 900
+    },
+    "google_trends": {
+      "min_interval_s": 1800
+    },
+    "producthunt": {
+      "min_interval_s": 1800
+    },
+    "youtube": {
+      "min_interval_s": 1800
+    },
+    "google_news": {
+      "min_interval_s": 900
+    },
+    "arxiv": {
+      "min_interval_s": 3600
+    },
+    "polymarket": {
+      "min_interval_s": 900
+    },
+    "kalshi": {
+      "min_interval_s": 900
+    },
+    "coingecko": {
+      "min_interval_s": 900
+    },
+    "x": {
+      "min_interval_s": 900
+    },
+    "tiktok": {
+      "min_interval_s": 900
+    },
+    "instagram": {
+      "min_interval_s": 900
+    }
+  },
+  "known_assets": [
+    "SPY",
+    "QQQ",
+    "NVDA",
+    "TSLA",
+    "AAPL",
+    "MSFT",
+    "BTC",
+    "ETH",
+    "SOL"
+  ],
+  "budget": {
+    "max_calls_per_day": 30,
+    "max_input_tokens_per_day": 400000,
+    "kinds": {
+      "classify": {
+        "max_calls_per_day": 30
+      },
+      "draft": {
+        "max_calls_per_day": 30
+      },
+      "materiality": {
+        "max_calls_per_day": 10,
+        "max_input_tokens_per_day": 60000
+      }
+    },
+    "legacy_reserve_calls": 10
+  },
+  "llm": {
+    "enabled": true,
+    "model": "jev-1.13.0",
+    "endpoint": "https://api.typesafe.ai/v1/systemone",
+    "keychain_service": "typesafe-api-key",
+    "min_interval_s": 3600,
+    "timeout_s": 30,
+    "min_confidence": 0.5,
+    "reasons": {
+      "launch/release": "A new product or version",
+      "earnings/financials": "Company results",
+      "regulation/policy": "Government rules",
+      "deal/M&A/funding": "Transaction or fundraising",
+      "incident/outage/hack": "Service or security incident",
+      "research breakthrough": "New research result",
+      "price/market move": "Asset repricing",
+      "controversy/drama": "Public dispute",
+      "viral meme/culture": "Cultural attention",
+      "macro data": "Economic release",
+      "other": "None of the above"
+    },
+    "angles": {
+      "explainer": "Explained: {title}",
+      "contrarian take": "The overlooked question: {title}",
+      "what-it-means-for-X": "What this means for operators: {title}",
+      "early heads-up": "Early heads-up: {title}",
+      "data breakdown": "Numbers to examine: {title}",
+      "how-to/opportunity": "Opportunity to investigate: {title}",
+      "hot take": "A question worth debating: {title}",
+      "none": "Watch: {title}"
+    },
+    "kind_min_interval_s": {
+      "draft": 0,
+      "materiality": 0
+    }
+  },
+  "drafts": {
+    "backend": "template",
+    "max_per_day": 3,
+    "platforms": [
+      "x",
+      "linkedin",
+      "blog"
+    ],
+    "voice": "plain-spoken operator, no hype",
+    "tones": {
+      "plain": "What to watch:",
+      "curious": "Worth a closer look:",
+      "analytical": "A signal to examine:"
+    },
+    "templates": {
+      "x": {
+        "heads-up": "{tone} {title}\n{angle}\n{link}",
+        "context": "{title}\n{why_trending}\n{link}"
+      },
+      "threads": {
+        "heads-up": "{tone} {title}\n{angle}\n{link}"
+      },
+      "linkedin": {
+        "operator": "{tone} {title}\n\n{why_trending}\n{angle}\n\nWhat would change your view?\n{link}",
+        "brief": "{title}\n\n{angle}\n{why_trending}\n{link}"
+      },
+      "blog": {
+        "analysis": "{title}\n- What happened: {title}\n- Why now: {why_trending}\n- Who it affects: {domains}\n- Angle: {angle}\n- What to watch: confirm the primary source and follow-through ({link})"
+      }
+    }
+  },
+  "hooks": {
+    "notify_enabled": false,
+    "publish_enabled": false
+  },
+  "intake": {
+    "_help": "Primary-source intake adapters (R1: SEC EDGAR 8-K Atom). Disabled until the owner sets a real contact email in user_agent; the adapter refuses to fetch live while the <CONTACT_EMAIL_REQUIRED> placeholder is present. SEC fair access: <= 10 requests/second.",
+    "sec_edgar": {
+      "enabled": false,
+      "feed_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include&start=0&count=100&output=atom",
+      "user_agent": "trend-watch/0.1.0 (+https://github.com/sebby26-cyber/trend-watcher) <CONTACT_EMAIL_REQUIRED>",
+      "allowed_hosts": [
+        "www.sec.gov",
+        "sec.gov"
+      ],
+      "timeout_s": 15,
+      "min_interval_s": 300,
+      "request_interval_s": 0.2,
+      "max_bytes": 2000000,
+      "max_decompressed_bytes": 8000000,
+      "max_elements": 50000,
+      "max_depth": 16,
+      "failure_threshold": 3,
+      "cooldown_s": 900,
+      "max_cooldown_s": 86400
+    }
+  },
+  "investment": {
+    "_help": "investment@shadow consumer: deterministic 8-K item rules -> REVIEW / IGNORE / INCOMPLETE. Shadow only in R1: records and reports live under the state directory, never the vault. No market data, no trade proposals.",
+    "enabled": true,
+    "env": "shadow",
+    "watchlist_path": "watchlist.json",
+    "intake": {
+      "max_admissions_per_day": 50
+    },
+    "circuit_breaker": {
+      "baseline_days": 7,
+      "min_history_days": 3,
+      "multiplier": 5,
+      "min_trip_count": 500,
+      "absolute_ceiling": 5000,
+      "pause_s": 86400
+    },
+    "materiality": {
+      "max_ambiguous_attempts": 2,
+      "estimated_input_tokens_per_call": 1500
+    },
+    "readiness": {
+      "min_shadow_days": 14,
+      "min_spot_checks": 20,
+      "min_review_precision": 0.8
+    }
+  },
+  "tripwire": {
+    "_help": "Digit-run tripwire (12-19 consecutive digits). Exemptions are narrow and typed: a field is exempt only if its NAME is listed AND its VALUE matches the type. Raw external text (never_exempt) never inherits an exemption, even when it contains a URL.",
+    "min_digits": 12,
+    "max_digits": 19,
+    "exempt_fields": {
+      "accession": "edgar-accession-dashed",
+      "amends_accession": "edgar-accession-dashed",
+      "uid": "digest-uid",
+      "event_uid": "digest-uid",
+      "record_uid": "digest-uid",
+      "revision_uid": "digest-uid",
+      "request_uid": "digest-uid",
+      "supersedes_uid": "digest-uid",
+      "amends_event_uid": "digest-uid",
+      "observation_uid": "digest-uid",
+      "watchlist_version": "digest-uid",
+      "hash": "hex-digest",
+      "title_hash": "hex-digest",
+      "item_hash": "hex-digest",
+      "payload_hash": "hex-digest",
+      "input_hash": "hex-digest",
+      "content_hash": "hex-digest",
+      "body_hash": "hex-digest",
+      "url": "url",
+      "link": "url",
+      "feed_url": "url",
+      "tick_uid": "digest-uid",
+      "fetch_uid": "digest-uid"
+    },
+    "never_exempt": [
+      "snippet",
+      "summary",
+      "title",
+      "company",
+      "label",
+      "note",
+      "raw",
+      "error"
+    ]
+  },
+  "retention": {
+    "days": 30,
+    "table_days": {
+      "signals": 2
+    },
+    "vacuum_interval_days": 7,
+    "vacuum_freelist_ratio": 0.25
+  },
+  "packs_dir": ""
+}

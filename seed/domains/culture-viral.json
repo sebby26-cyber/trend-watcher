@@ -1,0 +1,6 @@
+{
+  "_help": "Add YouTube channel_ids or playlist_ids; there is no free trending feed.",
+  "name": "culture-viral", "keywords": ["viral", "meme", "culture", "music", "movie"],
+  "sources": {"google_trends": {"geo": "US"}, "reddit": {"subreddits": ["popular", "OutOfTheLoop", "videos"]}, "youtube": {}},
+  "lanes": ["content"]
+}

@@ -1,0 +1,37 @@
+{
+  "_help": "Fixture watchlist. CIK is decisive; tickers/aliases are evidence only. ON is a common word, so it only matches as $ON or EXCHANGE:ON.",
+  "entries": [
+    {
+      "cik": "320193",
+      "name": "Apple Inc.",
+      "tickers": [
+        "AAPL"
+      ],
+      "aliases": [
+        "Apple"
+      ]
+    },
+    {
+      "cik": "1045810",
+      "name": "NVIDIA CORP",
+      "tickers": [
+        "NVDA"
+      ],
+      "aliases": [
+        "NVIDIA",
+        "Nvidia"
+      ]
+    },
+    {
+      "cik": "1097864",
+      "name": "ON Semiconductor Corp",
+      "tickers": [
+        "ON"
+      ],
+      "aliases": [
+        "onsemi"
+      ],
+      "ambiguous_ticker": true
+    }
+  ]
+}

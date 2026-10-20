@@ -1,0 +1,9 @@
+version: 2
+updates:
+  # Keep the pinned GitHub Actions current. The project itself has no dependencies.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci

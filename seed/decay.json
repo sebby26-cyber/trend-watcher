@@ -1,0 +1,75 @@
+{
+  "_help": [
+    "trend-watch file decay policy, read by `trend-watch decay` (trend_watch/decay.py).",
+    "Covers FILES under the state dir only. state.db rows are pruned separately by the",
+    "`retention` block of config.json (State.prune, every non-dry-run `run`).",
+    "Each rule: path (relative to the state dir), glob (matched against entry names",
+    "directly inside path), max_age_days (entry mtime older than this is eligible),",
+    "keep_last (the newest N matching entries are never eligible, whatever their age).",
+    "kind: 'file' or 'dir' (dir entries are removed whole). Default is dry-run;",
+    "`trend-watch decay --apply` removes and logs to logs/decay.jsonl.",
+    "never: paths (relative to the state dir) no rule may ever touch.",
+    "<config>/decay.json, when present, replaces this seed entirely: copy this file there and add rules, for example for a pack's <state>/<pack>/log/*.jsonl daily logs; list the pack's database and outbox/sent/failed dirs under never."
+  ],
+  "version": 1,
+  "rules": [
+    {
+      "name": "run-logs",
+      "path": "logs",
+      "glob": "*.log",
+      "kind": "file",
+      "max_age_days": 14,
+      "keep_last": 96,
+      "why": "Run logs retained for recent troubleshooting."
+    },
+    {
+      "name": "delivered-outbox",
+      "path": "outbox-delivered",
+      "glob": "*",
+      "kind": "dir",
+      "max_age_days": 30,
+      "keep_last": 0,
+      "why": "Copies of outputs already delivered by flush."
+    },
+    {
+      "name": "pre-migrate-backups",
+      "path": "backups",
+      "glob": "pre-migrate-*.db",
+      "kind": "file",
+      "max_age_days": 21,
+      "keep_last": 0,
+      "why": "Database snapshots taken before schema migrations."
+    },
+    {
+      "name": "manual-backups",
+      "path": "backups",
+      "glob": "state-*.db",
+      "kind": "file",
+      "max_age_days": 30,
+      "keep_last": 2,
+      "why": "Manual database backups; keep the newest two."
+    },
+    {
+      "name": "pre-restore-backups",
+      "path": "backups",
+      "glob": "pre-restore-*.db",
+      "kind": "file",
+      "max_age_days": 30,
+      "keep_last": 1,
+      "why": "Database snapshots taken before restoring a backup; keep the newest one."
+    }
+  ],
+  "never": [
+    "state.db",
+    "state.db-wal",
+    "state.db-shm",
+    "last-run.json",
+    "trend-watch.lock",
+    "logs/last-run.json",
+    "logs/decay.jsonl",
+    "outbox",
+    "feeds",
+    "archive",
+    "shadow"
+  ]
+}

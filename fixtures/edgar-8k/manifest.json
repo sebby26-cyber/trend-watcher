@@ -1,0 +1,265 @@
+{
+  "_help": "Curated offline replay cases for investment@shadow. Feeds are synthetic but follow the getcurrent Atom shape verified 2026-10-04. No network, no live Jev.",
+  "config": {
+    "intake": {
+      "sec_edgar": {
+        "min_interval_s": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "earnings_2.02",
+      "steps": [
+        {
+          "feed": "earnings.xml",
+          "expect": {
+            "320193:0000320193-26-000101": "REVIEW"
+          },
+          "expect_counts": {
+            "jev_requests": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "routine_filings",
+      "steps": [
+        {
+          "feed": "routine.xml",
+          "expect": {
+            "1045810:0001045810-26-000201": "IGNORE",
+            "320193:0000320193-26-000102": "IGNORE",
+            "320193:0000320193-26-000108": "INCOMPLETE"
+          }
+        }
+      ]
+    },
+    {
+      "name": "m&a_1.01_2.01",
+      "steps": [
+        {
+          "feed": "ma.xml",
+          "expect": {
+            "1045810:0001045810-26-000202": "REVIEW",
+            "320193:0000320193-26-000103": "REVIEW",
+            "1097864:0001097864-26-000301": "REVIEW"
+          }
+        }
+      ]
+    },
+    {
+      "name": "amendment_8-K/A",
+      "steps": [
+        {
+          "feed": "amendment.xml",
+          "expect": {
+            "320193:0000320193-26-000104": "REVIEW",
+            "320193:0000320193-26-000105": "REVIEW"
+          }
+        }
+      ]
+    },
+    {
+      "name": "false_alias_common_word_ticker",
+      "steps": [
+        {
+          "feed": "false_alias.xml",
+          "expect": {
+            "1418121:0001418121-26-000011": "NOT_ADMITTED",
+            "1999101:0001999101-26-000001": "NOT_ADMITTED",
+            "1999102:0001999102-26-000001": "NOT_ADMITTED"
+          },
+          "expect_counts": {
+            "jev_requests": 0,
+            "records": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "duplicates_refetch_correction",
+      "steps": [
+        {
+          "feed": "dup_v1.xml",
+          "etag": "\"v1\"",
+          "expect": {
+            "320193:0000320193-26-000106": "IGNORE"
+          },
+          "expect_counts": {
+            "observations": 1,
+            "records": 1
+          }
+        },
+        {
+          "feed": "dup_v1.xml",
+          "etag": "\"v1\"",
+          "advance_s": 600,
+          "expect": {
+            "320193:0000320193-26-000106": "IGNORE"
+          },
+          "expect_counts": {
+            "observations": 1,
+            "records": 1
+          }
+        },
+        {
+          "feed": "dup_v1.xml",
+          "advance_s": 600,
+          "expect_counts": {
+            "observations": 1,
+            "source_items": 1,
+            "records": 1
+          }
+        },
+        {
+          "feed": "dup_v2.xml",
+          "advance_s": 600,
+          "expect": {
+            "320193:0000320193-26-000106": "REVIEW"
+          },
+          "expect_counts": {
+            "observations": 2,
+            "revisions": 2,
+            "records": 2,
+            "superseded": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "provider_outage_then_recovery",
+      "steps": [
+        {
+          "feed": "ambiguous.xml",
+          "jev": "outage",
+          "expect": {
+            "320193:0000320193-26-000107": "BLOCKED_DEPENDENCY",
+            "1045810:0001045810-26-000203": "BLOCKED_DEPENDENCY"
+          },
+          "expect_counts": {
+            "records": 0,
+            "jev_requests": 1
+          }
+        },
+        {
+          "feed": "ambiguous.xml",
+          "jev": {
+            "Apple Inc.": "material",
+            "NVIDIA CORP": "not-material"
+          },
+          "advance_s": 600,
+          "expect": {
+            "320193:0000320193-26-000107": "REVIEW",
+            "1045810:0001045810-26-000203": "IGNORE"
+          },
+          "expect_counts": {
+            "jev_requests": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "rate_limited_not_counted",
+      "steps": [
+        {
+          "feed": "ambiguous.xml",
+          "jev": "rate_limited",
+          "expect": {
+            "320193:0000320193-26-000107": "BLOCKED_DEPENDENCY"
+          }
+        },
+        {
+          "feed": "ambiguous.xml",
+          "jev": "rate_limited",
+          "advance_s": 600,
+          "expect": {
+            "320193:0000320193-26-000107": "BLOCKED_DEPENDENCY"
+          }
+        },
+        {
+          "feed": "ambiguous.xml",
+          "jev": "unclear",
+          "advance_s": 600,
+          "expect": {
+            "320193:0000320193-26-000107": "REVIEW",
+            "1045810:0001045810-26-000203": "REVIEW"
+          }
+        }
+      ]
+    },
+    {
+      "name": "two_ambiguous_attempts_then_review",
+      "steps": [
+        {
+          "feed": "ambiguous.xml",
+          "jev": "timeout",
+          "expect": {
+            "320193:0000320193-26-000107": "AWAITING_ANNOTATION"
+          }
+        },
+        {
+          "feed": "ambiguous.xml",
+          "jev": "malformed",
+          "advance_s": 600,
+          "expect": {
+            "320193:0000320193-26-000107": "REVIEW",
+            "1045810:0001045810-26-000203": "REVIEW"
+          },
+          "expect_counts": {
+            "jev_requests": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "malformed_entry_dead_letter",
+      "steps": [
+        {
+          "feed": "malformed.xml",
+          "expect": {
+            "12A45:0001999103-26-000001": "DEAD_LETTER",
+            "320193:0000320193-26-000109": "REVIEW"
+          }
+        }
+      ]
+    },
+    {
+      "name": "co_registrant_same_accession",
+      "steps": [
+        {
+          "feed": "coregistrant.xml",
+          "expect": {
+            "1045810:0001045810-26-000204": "REVIEW",
+            "1999104:0001045810-26-000204": "NOT_ADMITTED"
+          }
+        }
+      ]
+    },
+    {
+      "name": "feed_outage_keeps_committed_work",
+      "steps": [
+        {
+          "feed": "earnings.xml",
+          "expect": {
+            "320193:0000320193-26-000101": "REVIEW"
+          }
+        },
+        {
+          "feed": "earnings.xml",
+          "feed_fail": "connection refused",
+          "advance_s": 600,
+          "allow_failed": [
+            "ingest"
+          ],
+          "expect": {
+            "320193:0000320193-26-000101": "REVIEW"
+          },
+          "expect_counts": {
+            "records": 1
+          }
+        }
+      ]
+    }
+  ]
+}

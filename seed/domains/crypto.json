@@ -1,0 +1,5 @@
+{
+  "name": "crypto", "lanes": ["trading", "content"],
+  "keywords": ["bitcoin", "ethereum", "crypto", "BTC", "ETH", "SOL"], "tickers": ["BTC", "ETH", "SOL"],
+  "sources": {"coingecko": {}, "reddit": {"subreddits": ["CryptoCurrency", "Bitcoin"]}, "polymarket": {}}
+}

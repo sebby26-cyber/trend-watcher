@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="trend-watch logo">
+  <title>trend-watch</title>
+  <!-- radar ping: signal detected -->
+  <path d="M45.74,2.20 A13,13 0 0 1 60.80,17.26" stroke="#F5A623" stroke-width="1.6" stroke-linecap="round" opacity="0.45"/>
+  <path d="M46.44,6.14 A9,9 0 0 1 56.86,16.56" stroke="#F5A623" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  <!-- noise floor -->
+  <path d="M6,44 L10,42 L14,45 L18,43 L22,44 L26,42 L30,44 L34,43 L38,43" stroke="#7D8798" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- rising signal -->
+  <path d="M38,43 C43,43 46,34 48,15" stroke="#3DDC97" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+  <!-- caught node -->
+  <circle cx="48" cy="15" r="4.4" fill="#3DDC97" opacity="0.22"/>
+  <circle cx="48" cy="15" r="2.6" fill="#3DDC97"/>
+</svg>
