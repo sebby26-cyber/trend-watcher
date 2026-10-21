@@ -88,6 +88,16 @@ Plain-spoken operator. No hype. (It is literally the tool's own default drafting
 - **Don't** recolor the rising spike anything but Signal green. **Don't** stretch, rotate,
   add drop shadows, or box the mark in a hard rectangle.
 
+## Motion
+
+Video and animated assets follow the same restraint as the rest of the brand.
+
+- **Calm, instrument-like.** Lines draw on, bars fill, numbers tick, text types. No bounces, spins or camera moves.
+- **One idea per beat.** Hard cuts between ideas, about 4 to 6 seconds each.
+- **Two-line headlines.** A Haze statement, then a Signal-green payoff.
+- **Amber is earned.** Pulse appears only when something crosses a line: the radar ping, `CANDIDATE`, `REVIEW`.
+- **Show the real shapes.** 0–1 scores against the 0.55 candidate line, the digest and the JSONL feed. Label mock data as illustrative.
+
 ## Assets
 
 | File | What |
@@ -96,6 +106,7 @@ Plain-spoken operator. No hype. (It is literally the tool's own default drafting
 | [`assets/logo.svg`](../assets/logo.svg) | Standalone mark (icon, favicon source) |
 | [`assets/how-it-works.svg`](../assets/how-it-works.svg) | Pipeline diagram (README "How it works") |
 | [`assets/social-preview.png`](../assets/social-preview.png) | 1280 × 640 social card for link previews. GitHub only accepts it by upload: Settings → General → Social preview |
+| [`assets/demo.webp`](../assets/demo.webp) | 24 s animated walkthrough for the README (16:10, 960 × 600, loops). Data in it is illustrative |
 
 The SVGs have no external font dependencies. Every piece of text in them is converted to
 outlines (JetBrains Mono for the wordmark, chips and diagram labels, Inter Medium for
