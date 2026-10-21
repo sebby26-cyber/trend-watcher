@@ -13,6 +13,12 @@
 [![Output](https://img.shields.io/badge/output-signal%20only-F5A623?style=flat-square)](#the-output-is-a-signal)
 [![Version](https://img.shields.io/badge/version-0.1.0-7D8798?style=flat-square)](#roadmap)
 
+<br>
+
+<img src="assets/demo.webp" alt="Animated walkthrough. A firehose of items from Hacker News, Reddit, GitHub, arXiv, Polymarket and more scrolls past until one GitHub repo lights up. In the ai-tech domain its score climbs past the 0.55 candidate line and it is flagged as a candidate. The same rule then scores arXiv papers and markets-trading events, including an SEC 8-K marked REVIEW. The results land in a Markdown digest and a JSONL feed, and the clip ends on: Trend Watch. Make it yours. Free and open source." width="860">
+
+<sub>24-second walkthrough · illustrative data</sub>
+
 </div>
 
 ---
@@ -554,6 +560,7 @@ trend-watcher/
 │   └── dependabot.yml           # keeps the pinned Actions current
 ├── assets/
 │   ├── banner.svg               # brand hero
+│   ├── demo.webp                # animated README walkthrough (16:10)
 │   ├── how-it-works.svg         # pipeline diagram
 │   ├── logo.svg                 # brand mark
 │   └── social-preview.png       # 1280x640 link-preview card
