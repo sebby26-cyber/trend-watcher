@@ -477,6 +477,8 @@ trend-watch backup [--dest DIR]  # online backup of state.db (default <state>/ba
 trend-watch restore <file>       # archive the current state.db, then restore a backup
 trend-watch decay                # preview eligible files and the space they would free
 trend-watch decay --apply        # remove eligible entries and log the results
+trend-watch prune                # state.db row retention now (daily deep pass + space reclaim)
+trend-watch prune --dry-run      # count the rows a prune would delete
 ```
 
 File retention defaults to [`seed/decay.json`](seed/decay.json): old run logs, copies of
@@ -488,7 +490,16 @@ Protected paths and symlinks are skipped.
 If `<config>/decay.json` exists, it replaces the seed policy entirely. Copy the seed
 there to customize it or add rules for pack logs, and list the pack's database and
 outbox/sent/failed directories under `never`. Database rows are pruned separately
-through the `retention` block of `config.json` during normal `run` executions.
+through the `retention` block of `config.json` during normal `run` executions:
+`signals` (2 days), `scores`, `runs` and `llm_calls` (30 days) on every run, and once a
+day (`deep_interval_h`) items no dedupe needs (never a candidate, no pending, draft or
+cache row), their orphaned aliases, and superseded or long-unseen legacy observations
+with their source items. SEC intake observations and any row an R1 table references
+are kept. Deletes run in batches; the first due VACUUM switches the file to
+`auto_vacuum=INCREMENTAL`, after which each daily pass reclaims space with
+`incremental_vacuum` and a WAL checkpoint. A VACUUM is skipped when free disk is below
+about 2.2x the live data. `trend-watch prune` runs the full pass now, and
+`trend-watch prune --dry-run` counts what it would delete.
 
 ## Configuration
 
@@ -543,7 +554,9 @@ prints the directories it resolved and pins them in the scheduler entry.
 | `intake.sec_edgar.user_agent` | placeholder | Must include your contact email |
 | `intake.sec_edgar.request_interval_s` | `0.2` | Seconds between SEC requests; minimum `0.1` (10 req/s) |
 | `investment.watchlist_path` | `watchlist.json` | Watchlist path, relative to the config directory |
-| `retention.days` | `30` | Retention for state tables |
+| `retention.days` | `30` | Default row retention for state.db tables |
+| `retention.table_days` | signals `2`, others `30` | Per-table windows (`0` = never prune): signals, scores, runs, llm_calls every run; items, observations once a day |
+| `retention.batch_rows` | `5000` | Rows deleted per short transaction |
 | `hooks.notify_enabled` / `publish_enabled` | `false` | Stub hooks only. `publish` is never called |
 
 > [!NOTE]

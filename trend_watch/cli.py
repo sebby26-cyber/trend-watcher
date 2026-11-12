@@ -69,6 +69,8 @@ def parser():
     commands.add_parser("restore", help="archive the current state.db, then restore a backup").add_argument("backup_file")
     commands.add_parser("decay", help="file retention for the state dir (dry-run unless --apply)").add_argument(
         "--apply", action="store_true", help="remove eligible files and log them to logs/decay.jsonl")
+    prune = commands.add_parser("prune", help="state.db row retention now, incl. the daily deep pass (--dry-run counts only)")
+    prune.add_argument("--dry-run", action="store_true", help="count the rows a forced prune would delete")
     pack = commands.add_parser("pack", help="list or evaluate optional alert packs")
     pack.add_argument("name", help="pack name, or list")
     pack.add_argument("operation", nargs="?", choices=("run", "report", "harvest"))
@@ -89,6 +91,8 @@ def mutating(args):
         return args.operation in ("add", "archive")
     if args.command == "decay":
         return args.apply
+    if args.command == "prune":
+        return not args.dry_run
     return True
 
 
@@ -162,6 +166,20 @@ def dispatch(args, paths):
     if args.command == "decay":
         from .decay import decay
         decay(paths, apply=args.apply)
+        return 0
+    if args.command == "prune":
+        from .pipeline import retention_report
+        settings = load_config(paths)["retention"]
+        db = State(paths.state / "state.db", migrate=not args.dry_run)
+        try:
+            if args.dry_run:
+                print("retention dry-run: " + json.dumps(db.count_prunable(time.time(), settings), sort_keys=True))
+            else:
+                pruned = db.prune(time.time(), settings, force=True)
+                print(retention_report(pruned) or "retention: disabled (retention.days is 0)")
+                print(json.dumps(pruned, sort_keys=True))
+        finally:
+            db.close()
         return 0
     if args.command == "restore":
         from .backup import restore

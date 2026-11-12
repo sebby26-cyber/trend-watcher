@@ -137,6 +137,8 @@ The exact normalized decision input is stored with each request (`input_snapshot
 
 Post-R1 (merged onto main with R1): `State.prune` plus the seed `retention` block delete only the legacy time-series tables `signals` (2 days), `scores`, `runs` and `llm_calls` (30 days), then VACUUM when due. Nothing it reads is older than one UTC day (`signals` within `cooccurrence_h`, `scores` latest row, `llm_calls` per-day caps and min-interval). Observations, R1 tables and every immutable table are never pruned, so this fix still holds.
 
+Retention extension (2026-11-12): the legacy observation log grew without bound, so the retention pass now also deletes, once a day, legacy-source observations older than `table_days.observations` (30) that are either superseded by a newer payload of the same source item or belong to an item unseen for the whole window, then source items left with no observations. The newest payload of a live item is kept so refetch dedupe holds. SEC intake (`sec_edgar_8k`) observations and any observation referenced by `event_revisions`, `observation_resolutions` or `dead_letters` are never pruned. The `observations_no_delete` trigger is dropped and recreated verbatim inside each batch transaction, so no other connection ever sees the table unguarded; replay and audit still read `input_snapshot_json`, so Fix 9 holds.
+
 ### Fix 10: Migrations, backup and restore
 
 - `trend_watch/migrations.py`: v1 = baseline schema, v2 = P0 + observations + ledger, v3 = engine.

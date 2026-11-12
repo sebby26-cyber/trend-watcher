@@ -4,6 +4,7 @@ import copy
 import io
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -919,7 +920,8 @@ class RetentionRegressionTests(Base):
         db = self.state()
         retention = defaults()["retention"]
         self.assertEqual(retention["days"], 30)
-        self.assertEqual(retention["table_days"], {"signals": 2})
+        self.assertEqual(retention["table_days"], {"signals": 2, "scores": 30, "runs": 30, "llm_calls": 30,
+                                                   "items": 30, "observations": 30})
         day = 86400
         for age in (1, 3, 29, 31):
             db.execute("INSERT INTO signals VALUES (?,?,?)", ("k%d" % age, "fake", NOW - age * day))
@@ -930,3 +932,125 @@ class RetentionRegressionTests(Base):
         self.assertEqual(pruned["llm_calls"], 1)
         self.assertEqual([r[0] for r in db.execute("SELECT key FROM signals")], ["k1"])
         self.assertEqual(db.execute("SELECT COUNT(*) FROM llm_calls").fetchone()[0], 3)
+
+
+    def add_item(self, db, hash_, last_seen, **cols):
+        db.execute("INSERT INTO items(hash,title_hash,title,url,platform,first_seen,last_seen,domains,data_json,candidate_at,llm_at)"
+                   " VALUES (?,?,?,?,?,?,?,?,?,?,?)", (hash_, "t" + hash_, hash_, "https://x/" + hash_, "fake", last_seen,
+                                                       last_seen, "[]", "{}", cols.get("candidate_at"), cols.get("llm_at")))
+        db.execute("INSERT INTO aliases VALUES (?,?)", ("u" + hash_, hash_))
+
+    def test_items_prune_keeps_dedupe_rows_and_drops_orphan_aliases(self):
+        db, day = self.state(), 86400
+        old = NOW - 40 * day
+        self.add_item(db, "plain", old)
+        self.add_item(db, "fresh", NOW - day)
+        self.add_item(db, "surfaced", old, candidate_at=old)
+        self.add_item(db, "classified", old, llm_at=old)
+        self.add_item(db, "pending", old)
+        self.add_item(db, "drafted", old)
+        db.execute("INSERT INTO pending VALUES ('pending','{}',?)", (old,))
+        db.execute("INSERT INTO drafts VALUES ('drafted','2026-01-01',?)", (old,))
+        db.conn.commit()
+        pruned = db.prune(NOW, defaults()["retention"])
+        self.assertTrue(pruned["deep"])
+        self.assertEqual(pruned["items"], 1)
+        self.assertEqual(pruned["aliases"], 1)
+        kept = sorted(r[0] for r in db.execute("SELECT hash FROM items"))
+        self.assertEqual(kept, ["classified", "drafted", "fresh", "pending", "surfaced"])
+        self.assertEqual(sorted(r[0] for r in db.execute("SELECT item_hash FROM aliases")), kept)
+
+    def test_deep_pass_runs_once_per_interval_unless_forced(self):
+        db, day = self.state(), 86400
+        retention = defaults()["retention"]
+        self.assertTrue(db.prune(NOW, retention)["deep"])
+        self.add_item(db, "plain", NOW - 40 * day)
+        db.conn.commit()
+        later = db.prune(NOW + 3600, retention)
+        self.assertNotIn("items", later)
+        self.assertEqual(db.execute("SELECT COUNT(*) FROM items").fetchone()[0], 1)
+        self.assertEqual(db.prune(NOW + 3600, retention, force=True)["items"], 1)
+        self.assertEqual(db.prune(NOW + 25 * 3600 + 3600, retention).get("items"), 0)
+
+    def test_observations_prune_keeps_live_newest_protected_and_referenced_rows(self):
+        from trend_watch.observations import record
+        db, day = self.state(), 86400
+        old, recent = NOW - 40 * day, NOW - day
+        with db.conn:
+            gone = record(db, "fake", "gone", {"v": 1}, old)
+            live_old = record(db, "fake", "live", {"v": 1}, old)
+            live_new = record(db, "fake", "live", {"v": 2}, old + 60)
+            record(db, "fake", "live", {"v": 2}, recent)  # still seen: refreshes last_seen_at only
+            stale_newest = record(db, "fake", "steady", {"v": 1}, old)
+            record(db, "fake", "steady", {"v": 1}, recent)
+            sec = record(db, "sec_edgar_8k", "0001", {"v": 1}, old)
+            ref = record(db, "fake", "resolved", {"v": 1}, old)
+            db.execute("INSERT INTO observation_resolutions VALUES (?,?,?,?,?,?)", (ref[1], "resolved", None, None, None, "x"))
+        pruned = db.prune(NOW, defaults()["retention"])
+        self.assertEqual(pruned["observations"], 2)  # gone + superseded live v1
+        self.assertEqual(pruned["source_items"], 1)  # gone
+        left = {r[0] for r in db.execute("SELECT id FROM observations")}
+        self.assertEqual(left, {live_new[1], stale_newest[1], sec[1], ref[1]})
+        self.assertNotIn(live_old[1], left)
+        self.assertIsNone(db.execute("SELECT id FROM source_items WHERE id=?", (gone[0],)).fetchone())
+        # The immutability guard is back after the pass.
+        with self.assertRaises(sqlite3.IntegrityError):
+            db.execute("DELETE FROM observations")
+        db.conn.rollback()
+        self.assertEqual(db.count_prunable(NOW, defaults()["retention"])["observations"], 0)
+
+    def test_batched_deletes_and_zero_window_keeps_table(self):
+        db, day = self.state(), 86400
+        for n in range(7):
+            db.execute("INSERT INTO signals VALUES (?,?,?)", ("k%d" % n, "fake", NOW - 5 * day))
+            db.execute("INSERT INTO scores VALUES (?,?,?,?,?)", ("h%d" % n, "fake", NOW - 40 * day, 1.0, 1))
+        db.conn.commit()
+        retention = merge(defaults()["retention"], {"batch_rows": 2, "table_days": {"scores": 0}})
+        pruned = db.prune(NOW, retention)
+        self.assertEqual(pruned["signals"], 7)
+        self.assertNotIn("scores", pruned)
+        self.assertEqual(db.execute("SELECT COUNT(*) FROM scores").fetchone()[0], 7)
+
+    def test_vacuum_switches_to_incremental_then_reclaims_with_incremental_vacuum(self):
+        db, day = self.state(), 86400
+        payload = "x" * 2000
+        for n in range(400):
+            db.execute("INSERT INTO runs(ts,summary_json) VALUES (?,?)", (NOW - 40 * day, payload))
+        db.conn.commit()
+        self.assertEqual(db.execute("PRAGMA auto_vacuum").fetchone()[0], 0)
+        pruned = db.prune(NOW, defaults()["retention"], force=True)
+        self.assertTrue(pruned["vacuumed"])
+        self.assertEqual(db.execute("PRAGMA auto_vacuum").fetchone()[0], 2)
+        self.assertEqual(db.execute("PRAGMA journal_mode").fetchone()[0], "wal")
+        self.assertLess(pruned["size_after"]["page_bytes"], pruned["size_before"]["page_bytes"])
+        for n in range(400):
+            db.execute("INSERT INTO runs(ts,summary_json) VALUES (?,?)", (NOW - 40 * day, payload))
+        db.conn.commit()
+        pages = db.execute("PRAGMA page_count").fetchone()[0]
+        again = db.prune(NOW, defaults()["retention"], force=True)
+        self.assertFalse(again["vacuumed"])
+        self.assertGreater(again["incremental_vacuum_pages"], 0)
+        self.assertEqual(db.execute("PRAGMA freelist_count").fetchone()[0], 0)
+        self.assertLess(db.execute("PRAGMA page_count").fetchone()[0], pages)
+
+    def test_vacuum_skipped_when_disk_is_short(self):
+        db, day = self.state(), 86400
+        for n in range(200):
+            db.execute("INSERT INTO runs(ts,summary_json) VALUES (?,?)", (NOW - 40 * day, "x" * 2000))
+        db.conn.commit()
+        usage = types.SimpleNamespace(total=1, used=1, free=0)
+        with patch("shutil.disk_usage", return_value=usage):
+            pruned = db.prune(NOW, defaults()["retention"], force=True)
+        self.assertFalse(pruned["vacuumed"])
+        self.assertEqual(pruned["vacuum_skipped"], "low disk")
+        self.assertEqual(db.execute("PRAGMA auto_vacuum").fetchone()[0], 0)
+
+    def test_run_logs_retention_line_and_last_run_json(self):
+        err = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            summary = run(self.paths, registry=self.registry, no_llm=True, now=NOW)
+        self.assertIn("retention: deleted", err.getvalue())
+        self.assertIn("db file", err.getvalue())
+        self.assertIn("size_after", summary["retention"])
+        saved = json.loads((self.paths.state / "logs/last-run.json").read_text())
+        self.assertTrue(saved["retention"]["deep"])

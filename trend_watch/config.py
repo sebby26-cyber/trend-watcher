@@ -82,7 +82,7 @@ def validate_shape(data, template, path="config"):
                             "max_depth", "max_admissions_per_day", "baseline_days", "min_history_days",
                             "min_trip_count", "absolute_ceiling", "max_ambiguous_attempts",
                             "estimated_input_tokens_per_call", "min_shadow_days", "min_spot_checks",
-                            "min_digits", "max_digits"}
+                            "min_digits", "max_digits", "batch_rows", "incremental_vacuum_pages"}
             if not number(value) or value < 0 or (key in integer_keys and type(value) is not int):
                 raise ValueError(label + " must be a nonnegative " + type(expected).__name__)
         elif isinstance(expected, list):

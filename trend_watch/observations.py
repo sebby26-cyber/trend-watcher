@@ -4,7 +4,9 @@
 source publishes; ``observations(source_item_id, payload_hash)`` is one
 immutable payload version of it. An identical refetch only advances
 ``source_items.last_seen_at``/``sightings``; a changed payload is a new
-observation row. Database triggers reject UPDATE/DELETE on observations.
+observation row. Database triggers reject UPDATE/DELETE on observations;
+only the retention pass (State.prune) removes aged legacy rows, inside one
+transaction that restores the trigger.
 
 The caller owns the transaction: ``record`` never commits, so an adapter's
 conditional-fetch validators can be committed atomically with its observations.

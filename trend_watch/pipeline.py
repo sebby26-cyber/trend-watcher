@@ -104,13 +104,15 @@ def run(paths, domain=None, no_llm=False, no_drafts=False, dry_run=False, max_ca
         summary["summary"] = line
         db.execute("INSERT INTO runs(ts,summary_json) VALUES (?,?)", (now, dumps(summary)))
         db.conn.commit()
+        retention_line = None
         if not dry_run:
             try:
                 pruned = db.prune(now, cfg["retention"])
-                if pruned.get("vacuumed") or any(v for k, v in pruned.items() if k != "vacuumed"):
-                    print("retention: " + json.dumps(pruned, sort_keys=True), file=sys.stderr)
+                summary["retention"] = pruned
+                retention_line = retention_report(pruned)
             except sqlite3.Error as exc:
-                print("retention: prune failed: {}".format(exc), file=sys.stderr)
+                db.conn.rollback()
+                retention_line = "retention: prune failed: {}".format(exc)
             logs = paths.state / "logs"
             logs.mkdir(parents=True, exist_ok=True)
             (logs / "last-run.json").write_text(dumps(summary, indent=2) + "\n", encoding="utf-8")
@@ -126,6 +128,8 @@ def run(paths, domain=None, no_llm=False, no_drafts=False, dry_run=False, max_ca
             print("unclassified (no-llm: {})".format(reason), file=stream)
         for error in errors + warnings + notes:
             print(error, file=stream)
+        if retention_line:
+            print(retention_line, file=sys.stderr)
         print(line)
         return summary
     finally:
@@ -152,3 +156,25 @@ def print_report(raw, statuses, candidates, domains, errors, stream):
               ",".join(item["platforms"]), item["age_hours"], title), file=stream)
     if not candidates:
         print("(none)", file=stream)
+
+
+def retention_report(pruned):
+    """One log line: rows deleted per table and DB size before/after (MiB)."""
+    if not pruned.get("size_before"):
+        return None
+    mib = lambda n: "{:.1f}".format(n / 1048576.0)
+    rows = " ".join("{}={}".format(k, v) for k, v in pruned.items() if isinstance(v, int) and not isinstance(v, bool)
+                    and k != "incremental_vacuum_pages")
+    b, a = pruned["size_before"], pruned["size_after"]
+    extra = []
+    if pruned.get("deep"):
+        extra.append("deep")
+    if pruned.get("vacuumed"):
+        extra.append("vacuum")
+    if pruned.get("incremental_vacuum_pages"):
+        extra.append("incremental_vacuum={}p".format(pruned["incremental_vacuum_pages"]))
+    if pruned.get("vacuum_skipped"):
+        extra.append("vacuum skipped: " + pruned["vacuum_skipped"])
+    return "retention: deleted {} | db file {} -> {} MiB, pages {} -> {} MiB, free {} -> {} MiB{}".format(
+        rows or "none", mib(b["file_bytes"]), mib(a["file_bytes"]), mib(b["page_bytes"]), mib(a["page_bytes"]),
+        mib(b["free_bytes"]), mib(a["free_bytes"]), " | " + ", ".join(extra) if extra else "")

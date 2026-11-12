@@ -272,12 +272,22 @@
     ]
   },
   "retention": {
+    "_help": "state.db row retention, run inside every non-dry-run `run`. days = default window; table_days overrides per table (0 = never prune). signals/scores/runs/llm_calls are pruned every run; items (never a candidate, no pending/draft/cache row), orphaned aliases and legacy observations/source_items once per deep_interval_h. Deletes go batch_rows per transaction. The first due VACUUM switches the file to auto_vacuum=INCREMENTAL; later passes reclaim with incremental_vacuum. A VACUUM needs ~vacuum_disk_factor x live data free on disk or it is skipped.",
     "days": 30,
     "table_days": {
-      "signals": 2
+      "signals": 2,
+      "scores": 30,
+      "runs": 30,
+      "llm_calls": 30,
+      "items": 30,
+      "observations": 30
     },
+    "batch_rows": 5000,
+    "deep_interval_h": 24,
+    "incremental_vacuum_pages": 20000,
     "vacuum_interval_days": 7,
-    "vacuum_freelist_ratio": 0.25
+    "vacuum_freelist_ratio": 0.25,
+    "vacuum_disk_factor": 2.2
   },
   "packs_dir": ""
 }
