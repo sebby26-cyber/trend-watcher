@@ -23,7 +23,13 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        exclude:
+          # ubuntu-latest is Ubuntu 26.04, which has no Python 3.9 build.
+          - os: ubuntu-latest
+            python-version: "3.9"
         include:
+          - os: ubuntu-24.04
+            python-version: "3.9"
           # macOS is a supported platform (launchd scheduler), so cover it once.
           - os: macos-latest
             python-version: "3.12"
